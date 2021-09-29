@@ -5,8 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GraphicsModeler"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+        Title="Graphics Builder" Height="450" Width="800"
+        x:Name="_mainWindow">
+    <Border>
+        <Canvas x:Name="_canvas" HorizontalAlignment="Center" VerticalAlignment="Center"
+          Width="0" Height="0"
+          RenderTransform="1 0 0 -1 0 0">
+        </Canvas>
+    </Border>
 </Window>

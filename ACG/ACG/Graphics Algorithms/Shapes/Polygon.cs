@@ -5,11 +5,33 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
 using GraphicsModeler.Extensions;
+using System.Drawing;
 
 namespace GraphicsModeler.Shapes
 {
     public class Polygon
     {
+
+        public IEnumerable<PointF> GetDDALine(int vectorIndex, int vectorIndex2)
+        {
+            var p1 = Vectors[vectorIndex];
+            var p2 = Vectors[vectorIndex2];
+            var dx = p2.X - p1.X;
+            var dy = p2.Y - p1.Y;
+            var L = Math.Max(Math.Abs(dx), Math.Abs(dy));
+            var xInc = dx / L;
+            var yInc = dy / L;
+            var x = p1.X;
+            var y = p1.Y;
+
+            for (int i = 0; i <= L; i++)
+            {
+                yield return new PointF(x, y);
+                x += xInc;
+                y += yInc;
+            }
+        }
+
         public List<Vector4> Vectors { get; set; }
         public Polygon(List<Vector4> vectorList)
         {
