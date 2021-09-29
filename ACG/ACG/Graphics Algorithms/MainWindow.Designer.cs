@@ -36,7 +36,7 @@
             // 
             this._canvas.Location = new System.Drawing.Point(0, 0);
             this._canvas.Name = "_canvas";
-            this._canvas.Size = new System.Drawing.Size(623, 256);
+            this._canvas.Size = new System.Drawing.Size(598, 366);
             this._canvas.TabIndex = 0;
             this._canvas.TabStop = false;
             // 
@@ -44,11 +44,13 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(941, 546);
+            this.ClientSize = new System.Drawing.Size(927, 552);
             this.Controls.Add(this._canvas);
             this.Name = "MainWindow";
             this.Text = "Graphics Algorithms";
             this.Load += new System.EventHandler(this.MainWindow_Load);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainWindow_KeyDown);
+            this.Resize += new System.EventHandler(this.MainWindow_Resize);
             ((System.ComponentModel.ISupportInitialize)(this._canvas)).EndInit();
             this.ResumeLayout(false);
 

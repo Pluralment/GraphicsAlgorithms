@@ -14,21 +14,26 @@ namespace GraphicsModeler.Shapes
 
         public IEnumerable<PointF> GetDDALine(int vectorIndex, int vectorIndex2)
         {
-            var p1 = Vectors[vectorIndex];
-            var p2 = Vectors[vectorIndex2];
-            var dx = p2.X - p1.X;
-            var dy = p2.Y - p1.Y;
-            var L = Math.Max(Math.Abs(dx), Math.Abs(dy));
-            var xInc = dx / L;
-            var yInc = dy / L;
-            var x = p1.X;
-            var y = p1.Y;
+            var xInitial = Vectors[vectorIndex].X;
+            var yInitial = Vectors[vectorIndex].Y;
+            var xFinal = Vectors[vectorIndex2].X;
+            var yFinal = Vectors[vectorIndex2].Y;
 
-            for (int i = 0; i <= L; i++)
+            float dx = xFinal - xInitial, dy = yFinal - yInitial, steps, k, xf, yf;
+            float xIncrement, yIncrement, x = xInitial, y = yInitial;
+
+            if (Math.Abs(dx) > Math.Abs(dy)) steps = Math.Abs(dx);
+
+            else steps = Math.Abs(dy);
+            xIncrement = dx / (float)steps;
+            yIncrement = dy / (float)steps;
+            for (k = 0; k < steps; k++)
             {
-                yield return new PointF(x, y);
-                x += xInc;
-                y += yInc;
+                x += xIncrement;
+                xf = (int)x;
+                y += yIncrement;
+                yf = (int)y;
+                yield return new PointF(xf, yf);
             }
         }
 
@@ -48,11 +53,11 @@ namespace GraphicsModeler.Shapes
                 Vectors[i] = Vectors[i].ScaleVector(scaleFactor, xPivot, yPivot, zPivot);
             }
         }
-        public void DeltaOffsets(float dX, float dY, float dZ)
+        public void Translate(float dX, float dY, float dZ)
         {
             for (int i = 0; i < Vectors.Count; i++)
             {
-                Vectors[i] = Vectors[i].DeltaOffsets(dX, dY, dZ);
+                Vectors[i] = Vectors[i].Translate(dX, dY, dZ);
             }
         }
         public void RotateVectorX(float degree, float dX, float dY, float dZ)
@@ -66,7 +71,7 @@ namespace GraphicsModeler.Shapes
         {
             for (int i = 0; i < Vectors.Count; i++)
             {
-                Vectors[i].RotateVectorY(degree, dX, dY, dZ);
+                Vectors[i] = Vectors[i].RotateVectorY(degree, dX, dY, dZ);
             }
         }
         public void RotateVectorZ(float degree, float dX, float dY, float dZ)

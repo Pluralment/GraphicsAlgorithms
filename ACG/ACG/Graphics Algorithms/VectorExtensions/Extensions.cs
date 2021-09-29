@@ -12,45 +12,49 @@ namespace GraphicsModeler.Extensions
     public static class Extensions
     {
 
-        public static Vector4 DeltaOffsets(this Vector4 vector, float dX, float dY, float dZ)
+        public static Vector4 Translate(this Vector4 vector, float dX, float dY, float dZ)
         {
-            return new Vector4(vector.X + dX, vector.Y + dY, vector.Z + dZ, 0);
+            return vector.TransformBy(Matrixes.Matrixes.GetTranslationMatrix(dX, dY, dZ));
+                
         }
 
         public static Vector4 ScaleVector(this Vector4 vector, float scaleFactor, float xPivot, float yPivot, float zPivot)
         {
-            var completeMatrix = Matrix4x4.Multiply(
-                                    Matrix4x4.Multiply(Matrixes.Matrixes.GetTranslationMatrix(xPivot, yPivot, zPivot),
-                                    Matrixes.Matrixes.GetScaleMatrix(scaleFactor)),
-                                    Matrixes.Matrixes.GetTranslationMatrix(-xPivot, -yPivot, -zPivot));
+            var completeMatrix = Matrixes.Matrixes.GetTranslationMatrix(-xPivot, -yPivot, -zPivot)
+                .MultiplyBy(Matrixes.Matrixes.GetScaleMatrix(scaleFactor))
+                .MultiplyBy(Matrixes.Matrixes.GetTranslationMatrix(xPivot, yPivot, zPivot));
             return Vector4.Transform(vector, completeMatrix);
         }
         public static Vector4 RotateVectorX(this Vector4 vector, float degree, float dX, float dY, float dZ)
         {
-            var completeMatrix = Matrix4x4.Multiply(
-                                    Matrix4x4.Multiply(
-                                    Matrixes.Matrixes.GetTranslationMatrix(dX, dY, dZ),
-                                    Matrixes.Matrixes.GetXAxisRotateMatrix(degree)),
-                                    Matrixes.Matrixes.GetTranslationMatrix(-dX, -dY, -dZ));
+            var completeMatrix = Matrixes.Matrixes.GetTranslationMatrix(-dX, -dY, -dZ)
+                .MultiplyBy(Matrixes.Matrixes.GetXAxisRotateMatrix(degree))
+                .MultiplyBy(Matrixes.Matrixes.GetTranslationMatrix(dX, dY, dZ));
             return Vector4.Transform(vector, completeMatrix);
         }
         public static Vector4 RotateVectorY(this Vector4 vector, float degree, float dX, float dY, float dZ)
         {
-            var completeMatrix = Matrix4x4.Multiply(
-                                    Matrix4x4.Multiply(
-                                    Matrixes.Matrixes.GetTranslationMatrix(dX, dY, dZ),
-                                    Matrixes.Matrixes.GetYAxisRotateMatrix(degree)),
-                                    Matrixes.Matrixes.GetTranslationMatrix(-dX, -dY, -dZ));
+            var completeMatrix = Matrixes.Matrixes.GetTranslationMatrix(-dX, -dY, -dZ)
+                .MultiplyBy(Matrixes.Matrixes.GetYAxisRotateMatrix(degree))
+                .MultiplyBy(Matrixes.Matrixes.GetTranslationMatrix(dX, dY, dZ));
             return Vector4.Transform(vector, completeMatrix);
         }
         public static Vector4 RotateVectorZ(this Vector4 vector, float degree, float dX, float dY, float dZ)
         {
-            var completeMatrix = Matrix4x4.Multiply(
-                                    Matrix4x4.Multiply(
-                                    Matrixes.Matrixes.GetTranslationMatrix(dX, dY, dZ),
-                                    Matrixes.Matrixes.GetZAxisRotateMatrix(degree)),
-                                    Matrixes.Matrixes.GetTranslationMatrix(-dX, -dY, -dZ));
+            var completeMatrix = Matrixes.Matrixes.GetTranslationMatrix(-dX, -dY, -dZ)
+                .MultiplyBy(Matrixes.Matrixes.GetZAxisRotateMatrix(degree))
+                .MultiplyBy(Matrixes.Matrixes.GetTranslationMatrix(dX, dY, dZ));
             return Vector4.Transform(vector, completeMatrix);
+        }
+
+        public static Matrix4x4 MultiplyBy(this Matrix4x4 value1, Matrix4x4 value2)
+        {
+            return Matrix4x4.Multiply(value1, value2);
+        }
+
+        public static Vector4 TransformBy(this Vector4 vector, Matrix4x4 matrix)
+        {
+            return Vector4.Transform(vector, matrix);
         }
     }
 }

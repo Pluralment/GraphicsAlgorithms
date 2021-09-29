@@ -34,10 +34,10 @@ namespace GraphicsModeler.Matrixes
         }
         public static Matrix4x4 GetTranslationMatrix(float deltaX, float deltaY, float deltaZ)
         {
-            return new Matrix4x4(1, 0, 0, deltaX,
-                                 0, 1, 0, deltaY,
-                                 0, 0, 1, deltaZ,
-                                 0, 0, 0, 1);
+            return new Matrix4x4(1, 0, 0, 0,
+                                 0, 1, 0, 0,
+                                 0, 0, 1, 0,
+                                 deltaX, deltaY, deltaZ, 1);
         }
 
         public static Matrix4x4 GetScaleMatrix(float scaleCofficient)
