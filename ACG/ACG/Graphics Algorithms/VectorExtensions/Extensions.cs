@@ -12,45 +12,37 @@ namespace GraphicsModeler.Extensions
     public static class Extensions
     {
 
-        public static Vector4 Translate(this Vector4 vector, float dX, float dY, float dZ)
+        public static void Translate(this List<Vector4> points, Vector3 translation)
         {
-            return vector.TransformBy(Matrixes.Matrixes.GetTranslationMatrix(dX, dY, dZ));
-                
+            Parallel.For(0, points.Count, i =>
+            {
+                points[i] = points[i].TransformBy(Matrixes.Matrixes.GetTranslationMatrix(translation.X, translation.Y, translation.Z));
+            });
         }
 
-        public static Vector4 ScaleVector(this Vector4 vector, float scaleFactor, float xPivot, float yPivot, float zPivot)
+        public static void ScaleVectors(this List<Vector4> points, float scaleFactor, Vector3 translation)
         {
-            var completeMatrix = Matrixes.Matrixes.GetTranslationMatrix(-xPivot, -yPivot, -zPivot)
-                .MultiplyBy(Matrixes.Matrixes.GetScaleMatrix(scaleFactor))
-                .MultiplyBy(Matrixes.Matrixes.GetTranslationMatrix(xPivot, yPivot, zPivot));
-            return Vector4.Transform(vector, completeMatrix);
-        }
-        public static Vector4 RotateVectorX(this Vector4 vector, float degree, float dX, float dY, float dZ)
-        {
-            var completeMatrix = Matrixes.Matrixes.GetTranslationMatrix(-dX, -dY, -dZ)
-                .MultiplyBy(Matrixes.Matrixes.GetXAxisRotateMatrix(degree))
-                .MultiplyBy(Matrixes.Matrixes.GetTranslationMatrix(dX, dY, dZ));
-            return Vector4.Transform(vector, completeMatrix);
-        }
-        public static Vector4 RotateVectorY(this Vector4 vector, float degree, float dX, float dY, float dZ)
-        {
-            var completeMatrix = Matrixes.Matrixes.GetTranslationMatrix(-dX, -dY, -dZ)
-                .MultiplyBy(Matrixes.Matrixes.GetYAxisRotateMatrix(degree))
-                .MultiplyBy(Matrixes.Matrixes.GetTranslationMatrix(dX, dY, dZ));
-            return Vector4.Transform(vector, completeMatrix);
-        }
-        public static Vector4 RotateVectorZ(this Vector4 vector, float degree, float dX, float dY, float dZ)
-        {
-            var completeMatrix = Matrixes.Matrixes.GetTranslationMatrix(-dX, -dY, -dZ)
-                .MultiplyBy(Matrixes.Matrixes.GetZAxisRotateMatrix(degree))
-                .MultiplyBy(Matrixes.Matrixes.GetTranslationMatrix(dX, dY, dZ));
-            return Vector4.Transform(vector, completeMatrix);
+            var completeMatrix = Matrixes.Matrixes
+                .GetTranslationMatrix(-translation.X, -translation.Y, -translation.Z) *
+                Matrixes.Matrixes.GetScaleMatrix(scaleFactor) *
+                Matrixes.Matrixes.GetTranslationMatrix(translation.X, translation.Y, translation.Z);
+            Parallel.For(0, points.Count, i =>
+            {
+                points[i] = points[i].TransformBy(completeMatrix);
+            });
         }
 
-        public static Matrix4x4 MultiplyBy(this Matrix4x4 value1, Matrix4x4 value2)
+        public static void RotateVectors(this List<Vector4> points, Vector3 degrees, Vector3 translation)
         {
-            return Matrix4x4.Multiply(value1, value2);
+            var completeMatrix = Matrixes.Matrixes.GetTranslationMatrix(-translation.X, -translation.Y, -translation.Z) *
+                Matrixes.Matrixes.GetRotateMatrix(degrees.X, degrees.Y, degrees.Z) *
+                Matrixes.Matrixes.GetTranslationMatrix(translation.X, translation.Y, translation.Z);
+            Parallel.For(0, points.Count, i =>
+            {
+                points[i] = points[i].TransformBy(completeMatrix);
+            });
         }
+
 
         public static Vector4 TransformBy(this Vector4 vector, Matrix4x4 matrix)
         {

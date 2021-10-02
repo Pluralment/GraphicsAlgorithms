@@ -28,7 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this._canvas = new System.Windows.Forms.PictureBox();
+            this._drawTimer = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this._canvas)).BeginInit();
             this.SuspendLayout();
             // 
@@ -39,6 +41,12 @@
             this._canvas.Size = new System.Drawing.Size(598, 366);
             this._canvas.TabIndex = 0;
             this._canvas.TabStop = false;
+            this._canvas.MouseMove += new System.Windows.Forms.MouseEventHandler(this._canvas_MouseMove);
+            // 
+            // _drawTimer
+            // 
+            this._drawTimer.Interval = 5;
+            this._drawTimer.Tick += new System.EventHandler(this._drawTimer_Tick);
             // 
             // MainWindow
             // 
@@ -59,6 +67,7 @@
         #endregion
 
         private System.Windows.Forms.PictureBox _canvas;
+        private System.Windows.Forms.Timer _drawTimer;
     }
 }
 

@@ -9,43 +9,19 @@ namespace GraphicsModeler.Matrixes
 {
     public static class Matrixes
     {
-        public static Matrix4x4 GetZAxisRotateMatrix(float degree)
+        public static Matrix4x4 GetRotateMatrix(float xDegree, float yDegree, float zDegree)
         {
-            return new Matrix4x4(
-                (float)Math.Cos(degree), (float)Math.Sin(degree), 0, 0,
-                -(float)Math.Sin(degree), (float)Math.Cos(degree), 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1);
+            return Matrix4x4.CreateRotationX(xDegree) * Matrix4x4.CreateRotationY(yDegree) * Matrix4x4.CreateRotationZ(zDegree);
         }
 
-        public static Matrix4x4 GetXAxisRotateMatrix(float degree)
-        {
-            return new  Matrix4x4(1, 0, 0, 0,
-                                  0, (float)Math.Cos(degree), -(float)Math.Sin(degree), 0 ,
-                                  0, (float)Math.Sin(degree), (float)Math.Cos(degree), 0 ,
-                                  0, 0, 0, 1);
-        }
-        public static Matrix4x4 GetYAxisRotateMatrix(float degree)
-        {
-            return new Matrix4x4((float)Math.Cos(degree), 0, (float)Math.Sin(degree), 0,
-                                 0, 1, 0, 0,
-                                 -(float)Math.Sin(degree), 0, (float)Math.Cos(degree), 0,
-                                 0, 0, 0, 1);
-        }
         public static Matrix4x4 GetTranslationMatrix(float deltaX, float deltaY, float deltaZ)
         {
-            return new Matrix4x4(1, 0, 0, 0,
-                                 0, 1, 0, 0,
-                                 0, 0, 1, 0,
-                                 deltaX, deltaY, deltaZ, 1);
+            return Matrix4x4.CreateTranslation(new Vector3(deltaX, deltaY, deltaZ));
         }
 
         public static Matrix4x4 GetScaleMatrix(float scaleCofficient)
         {
-            return new Matrix4x4(scaleCofficient, 0, 0, 0,
-                                 0, scaleCofficient, 0, 0,
-                                 0, 0, scaleCofficient, 0,
-                                 0, 0, 0, 1);
+            return Matrix4x4.CreateScale(scaleCofficient);
         }
     }
 }
