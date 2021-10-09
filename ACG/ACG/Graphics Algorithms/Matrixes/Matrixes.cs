@@ -9,6 +9,14 @@ namespace GraphicsModeler.Matrixes
 {
     public static class Matrixes
     {
+        public static Matrix4x4 GetWorldMatrix(float deltaX, float deltaY, float deltaZ)
+        {
+            return Matrix4x4.CreateWorld(
+                new Vector3(deltaX, deltaY, deltaZ),
+                new Vector3(0, 0, 10),
+                new Vector3(0, 1, 0));
+        }
+
         public static Matrix4x4 GetRotateMatrix(float xDegree, float yDegree, float zDegree)
         {
             return Matrix4x4.CreateRotationX(xDegree) * Matrix4x4.CreateRotationY(yDegree) * Matrix4x4.CreateRotationZ(zDegree);

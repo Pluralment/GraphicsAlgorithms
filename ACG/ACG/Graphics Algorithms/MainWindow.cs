@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Numerics;
 using GraphicsModeler.Extensions;
 using GraphicsModeler.Helper;
+using GraphicsModeler.MainWindow.Extensions;
 
 namespace GraphicsModeler.MainWindow
 {
@@ -24,15 +25,18 @@ namespace GraphicsModeler.MainWindow
             InitializeComponent();
             _canvas.Size = this.ClientSize;
             _canvas.Image = new Bitmap(_canvas.Width, _canvas.Height);
-            parser = new ObjectFileParser(@"C:\Users\Kamar\Desktop\Airplane.obj");
+            //parser = new ObjectFileParser(@"C:\Users\KIRILL\Desktop\bag_low.OBJ");
+            parser = new ObjectFileParser();
         }
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
             translation.X = _canvas.Width / 2;
             translation.Y = _canvas.Height / 2;
-            model = parser.GetModel();
+            //model = parser.GetModel();
+            model = parser.CreateModel(@"C:\Users\KIRILL\Desktop\bag_low.OBJ");
             _drawTimer.Enabled = true;
+            //model.Vertexes.ToWorld(new Vector3( 0, 0, 0));
             model.Vertexes.Translate(translation);
             model.Vertexes.ScaleVectors(150f, translation);
         }

@@ -16,13 +16,32 @@ namespace GraphicsModeler.Parser
         private List<Vector4> _vectors;
         private List<List<int>> _polygons = new List<List<int>>();
         
+
+        public List<Vector4> Vectors
+        {
+            get => _vectors;
+            set => _vectors = value;
+        }
+        
+        public List<List<int>> Polygons
+        {
+            get => _polygons;
+            set => _polygons = value;
+        }
+
+        public ObjectFileParser()
+        {
+            
+        }
+
+        
         public ObjectFileParser(string fileName)
         {
             if (fileName is null)
                 throw new ArgumentNullException(nameof(fileName));
 
             _content = File.ReadAllText(fileName);
-            _lines = _content.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries)
+            _lines = _content.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
                 .Where(x => x.Trim() != string.Empty)
                 .Select(x => x.Trim()).ToArray();
             _vectors = _lines.Where(x => x.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[0].Equals("v", StringComparison.OrdinalIgnoreCase))
@@ -32,6 +51,7 @@ namespace GraphicsModeler.Parser
                                                           1))
                                 .ToList();
         }
+        
 
 
         public Model GetModel()

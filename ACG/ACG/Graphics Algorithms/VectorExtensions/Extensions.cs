@@ -20,6 +20,14 @@ namespace GraphicsModeler.Extensions
             });
         }
 
+        public static void ToWorld(this List<Vector4> points, Vector3 position)
+        {
+            Parallel.For(0, points.Count, i =>
+            {
+                points[i] = points[i].TransformBy(Matrixes.Matrixes.GetWorldMatrix(position.X, position.Y, position.Z));
+            });
+        }
+
         public static void ScaleVectors(this List<Vector4> points, float scaleFactor, Vector3 translation)
         {
             var completeMatrix = Matrixes.Matrixes
