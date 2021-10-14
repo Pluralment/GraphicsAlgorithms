@@ -1,16 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using GraphicsModeler.Parser;
-using System.Drawing.Imaging;
-using System.Linq;
-using System.Runtime.InteropServices;
 using System.Numerics;
 using GraphicsModeler.Extensions;
 using GraphicsModeler.Helper;
-using GraphicsModeler.MainWindow.Extensions;
 
 namespace GraphicsModeler.MainWindow
 {
@@ -19,26 +13,33 @@ namespace GraphicsModeler.MainWindow
         private Vector3 translation;
         private ObjectFileParser parser;
         private Model model;
+        
+        private Vector3 viewCamera = new Vector3(0, 0, 0);
+        private Vector3 viewTarget = new Vector3(0, 0, -10f);
+        private Vector3 viewUp = new Vector3(0f , 1f, 0f);
 
         public MainWindow()
         {
             InitializeComponent();
             _canvas.Size = this.ClientSize;
             _canvas.Image = new Bitmap(_canvas.Width, _canvas.Height);
-            //parser = new ObjectFileParser(@"C:\Users\KIRILL\Desktop\bag_low.OBJ");
             parser = new ObjectFileParser();
         }
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
-            translation.X = _canvas.Width / 2;
-            translation.Y = _canvas.Height / 2;
-            //model = parser.GetModel();
-            model = parser.CreateModel(@"C:\Users\KIRILL\Desktop\bag_low.OBJ");
+            translation.X = (float)_canvas.Width / 2;
+            translation.Y = (float)_canvas.Height / 2;
+            model = parser.CreateModel(@"gun.obj");
             _drawTimer.Enabled = true;
-            //model.Vertexes.ToWorld(new Vector3( 0, 0, 0));
-            model.Vertexes.Translate(translation);
+            
+            model.Vertexes.ToWorld(translation);
             model.Vertexes.ScaleVectors(150f, translation);
+            
+            model.Vertexes.ToView(viewCamera, viewTarget, viewUp);
+            model.Vertexes.ToPerspective((float)(Math.PI / 3), (float)_canvas.Width / _canvas.Height, 1f, 100f);
+            //model.Vertexes.ToViewPort(_canvas.Width, _canvas.Height);
+
         }
 
         private void MainWindow_KeyDown(object sender, KeyEventArgs e)
@@ -75,11 +76,6 @@ namespace GraphicsModeler.MainWindow
             {
                 model.Vertexes.ScaleVectors(0.8f, translation);
             }
-
-
-
-
-
         }
 
 
@@ -89,7 +85,7 @@ namespace GraphicsModeler.MainWindow
             if (model != null)
             {
                 model.Vertexes.Translate(new Vector3(-translation.X, -translation.Y, -translation.Z));
-                translation = new Vector3(_canvas.Width / 2, _canvas.Height / 2, 0);
+                translation = new Vector3((float)_canvas.Width / 2, (float)_canvas.Height / 2, 0);
                 model.Vertexes.Translate(translation);
             }
         }

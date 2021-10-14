@@ -4,14 +4,14 @@ using GraphicsModeler.Helper;
 using GraphicsModeler.Parser;
 using ObjParser;
 
-namespace GraphicsModeler.MainWindow.Extensions
+namespace GraphicsModeler.Extensions
 {
     public static class ObjectFileParserExtension
     {
         public static Model CreateModel(this ObjectFileParser parser, string fileName)
         {
             var obj = new Obj();
-            obj.LoadObj(@"C:\Users\KIRILL\Desktop\bag_low.OBJ");
+            obj.LoadObj(fileName);
 
             parser.Vectors = new List<Vector4>();
             // List<Vertex> -> List<Vector4>.

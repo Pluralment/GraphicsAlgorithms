@@ -13,9 +13,41 @@ namespace GraphicsModeler.Matrixes
         {
             return Matrix4x4.CreateWorld(
                 new Vector3(deltaX, deltaY, deltaZ),
-                new Vector3(0, 0, 10),
-                new Vector3(0, 1, 0));
+                new Vector3(0, 0, -1),
+                new Vector3(0, -1, 0));
         }
+        
+        public static Matrix4x4 GetViewMatrix(Vector3 camera, Vector3 target, Vector3 up)
+        {
+            return Matrix4x4.CreateLookAt(
+                camera,
+                target,
+                up);
+        }
+
+
+        public static Matrix4x4 GetPerspectiveMatrix(float fieldOfView, float aspectRatio,
+            float nearPlaneDistance, float farPlaneDistance)
+        {
+            return Matrix4x4.CreatePerspectiveFieldOfView(
+                fieldOfView,
+                aspectRatio,
+                nearPlaneDistance,
+                farPlaneDistance);
+        }
+        
+        public static Matrix4x4 GetViewPortMatrix(float width, float height,
+            float Xmin = 0, float Ymin = 0)
+        {
+            return new Matrix4x4(
+                width / 2, 0, 0, 0,
+                0, -height / 2, 0, 0,
+                0, 0, 1, 0,
+                Xmin + width / 2, Ymin + height / 2, 0, 1
+            );
+        }
+
+        
 
         public static Matrix4x4 GetRotateMatrix(float xDegree, float yDegree, float zDegree)
         {

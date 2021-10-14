@@ -30,12 +30,12 @@ namespace GraphicsModeler.Helper
                 {
                     var line = GetDDALine(Vertexes[p[i]], Vertexes[p[i + 1]]);
                     foreach (var pt in line)
-                        bmp[(int)pt.X, (int)pt.Y] = Color.FromArgb(255, Color.Green);
+                        bmp[(int)pt.X, (int)pt.Y] = Color.FromArgb(255, Color.Firebrick);
                 }
 
                 if (p.Count > 0)
                     foreach (var pt in GetDDALine(Vertexes[p.First()], Vertexes[p.Last()]))
-                        bmp[(int)pt.X, (int)pt.Y] = Color.FromArgb(255, Color.Green);
+                        bmp[(int)pt.X, (int)pt.Y] = Color.FromArgb(255, Color.Firebrick);
             });
             bmp.UnlockBits();
         }
