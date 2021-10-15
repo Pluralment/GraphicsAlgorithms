@@ -14,7 +14,7 @@ namespace GraphicsModeler.MainWindow
         private ObjectFileParser parser;
         private Model model;
         
-        private Vector3 viewCamera = new Vector3(0, 0, 0);
+        private Vector3 viewCamera = new Vector3(0, 0, 10);
         private Vector3 viewTarget = new Vector3(0, 0, -10f);
         private Vector3 viewUp = new Vector3(0f , 1f, 0f);
 
@@ -30,6 +30,7 @@ namespace GraphicsModeler.MainWindow
         {
             translation.X = (float)_canvas.Width / 2;
             translation.Y = (float)_canvas.Height / 2;
+            translation.Z = -(float)_canvas.Width;
             model = parser.CreateModel(@"gun.obj");
             _drawTimer.Enabled = true;
             
@@ -37,9 +38,8 @@ namespace GraphicsModeler.MainWindow
             model.Vertexes.ScaleVectors(150f, translation);
             
             model.Vertexes.ToView(viewCamera, viewTarget, viewUp);
-            model.Vertexes.ToPerspective((float)(Math.PI / 3), (float)_canvas.Width / _canvas.Height, 1f, 100f);
-            //model.Vertexes.ToViewPort(_canvas.Width, _canvas.Height);
-
+            model.Vertexes.ToPerspective((float)(Math.PI / 2), _canvas.Width, _canvas.Height);
+            model.Vertexes.ToViewport(_canvas.Width, _canvas.Height);
         }
 
         private void MainWindow_KeyDown(object sender, KeyEventArgs e)

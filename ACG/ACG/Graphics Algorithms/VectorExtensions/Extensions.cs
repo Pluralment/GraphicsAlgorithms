@@ -37,40 +37,33 @@ namespace GraphicsModeler.Extensions
         }
 
         
-        public static void ToPerspective(this List<Vector4> points, float fov, float aspectRatio,
-            float near, float far)
+        public static void ToPerspective(this List<Vector4> points, float fov, float width, float height)
         {
-            var perspectiveMatrix = Matrixes.Matrixes.GetPerspectiveMatrix(fov, aspectRatio,
-                near, far);
+            var perspectiveMatrix = Matrixes.Matrixes.GetPerspectiveMatrix(fov, (float)width / height,
+                1f, 100f);
             Parallel.For(0, points.Count, i =>
             {
                 var point = points[i];
-                point = points[i].TransformBy(perspectiveMatrix);
-
-
-
-                /*
+                point = point.TransformBy(perspectiveMatrix);
+                
+                // Perspective divide to get NDC.
                 if (point.W != 0.0f)
                 {
                     point /= point.W;   
                 }
-                */
                 
-
-                point.X += 1.0f;
-                point.Y += 1.0f;
-
                 points[i] = point;
-                    
-                
             });
         }
         
-        public static void ToViewPort(this List<Vector4> points, float width, float height, float Xmin = 0, float Ymin = 0)
+        public static void ToViewport(this List<Vector4> points, float width, float height, float Xmin = 0, float Ymin = 0)
         {
+            var viewPortMatrix = Matrixes.Matrixes.GetViewportMatrix(width, height, Xmin, Ymin);
             Parallel.For(0, points.Count, i =>
             {
-                points[i] = points[i].TransformBy(Matrixes.Matrixes.GetViewPortMatrix(width, height, Xmin, Ymin));
+                var point = points[i];
+                point = point.TransformBy(viewPortMatrix);
+                points[i] = point;
             });
         }
         
