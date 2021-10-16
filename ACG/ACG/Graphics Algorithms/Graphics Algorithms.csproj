@@ -74,6 +74,8 @@
     <Compile Include="Parser\ObjectFileParser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Scene\Camera.cs" />
+    <Compile Include="Scene\Mesh.cs" />
     <Compile Include="VectorExtensions\Extensions.cs" />
     <EmbeddedResource Include="MainWindow.resx">
       <DependentUpon>MainWindow.cs</DependentUpon>

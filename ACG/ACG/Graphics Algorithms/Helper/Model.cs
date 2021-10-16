@@ -6,35 +6,35 @@ using System.Text;
 using GraphicsModeler.Extensions;
 using System.Threading.Tasks;
 using System.Drawing;
+using GraphicsModeler.Scene;
 
 namespace GraphicsModeler.Helper
 {
     public class Model
     {
-        public Model(List<List<int>> polygons, List<Vector4> vertexes)
+        public Mesh Mesh { get; private set; }
+        public Vector3 Position { get; set; } = Vector3.Zero;
+        public int Scale { get; set; }
+
+        public Model(Mesh mesh)
         {
-            Polygons = polygons;
-            Vertexes = vertexes;
+            Mesh = mesh;
         }
 
-        public List<List<int>> Polygons { get; set; }
-        public List<Vector4> Vertexes { get; set; }
-
-
-        public void DrawToBitmap(ExtendedBitmap bmp)
+        public void Draw(ExtendedBitmap bmp)
         {
             bmp.LockBits();
-            Parallel.ForEach(Polygons, p =>
+            Parallel.ForEach(Mesh.Polygons, p =>
             {
                 for (var i = 0; i < p.Count - 1; i++)
                 {
-                    var line = GetDDALine(Vertexes[p[i]], Vertexes[p[i + 1]]);
+                    var line = GetDDALine(Mesh.Vertices[p[i]], Mesh.Vertices[p[i + 1]]);
                     foreach (var pt in line)
                         bmp[(int)pt.X, (int)pt.Y] = Color.FromArgb(255, Color.Firebrick);
                 }
 
                 if (p.Count > 0)
-                    foreach (var pt in GetDDALine(Vertexes[p.First()], Vertexes[p.Last()]))
+                    foreach (var pt in GetDDALine(Mesh.Vertices[p.First()], Mesh.Vertices[p.Last()]))
                         bmp[(int)pt.X, (int)pt.Y] = Color.FromArgb(255, Color.Firebrick);
             });
             bmp.UnlockBits();

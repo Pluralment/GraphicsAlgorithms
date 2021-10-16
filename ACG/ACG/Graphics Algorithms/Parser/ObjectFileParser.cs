@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Numerics;
 using GraphicsModeler.Helper;
+using GraphicsModeler.Scene;
 
 namespace GraphicsModeler.Parser
 {
@@ -70,7 +71,12 @@ namespace GraphicsModeler.Parser
                 _polygons.Add(polygonList);
             }
 
-            return new Model(_polygons, _vectors);
+            return new Model(
+                new Mesh
+                {
+                    Vertices = _vectors,
+                    Polygons = _polygons
+                });
         }
     }
 }

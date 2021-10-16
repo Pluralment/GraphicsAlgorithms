@@ -2,6 +2,7 @@
 using System.Numerics;
 using GraphicsModeler.Helper;
 using GraphicsModeler.Parser;
+using GraphicsModeler.Scene;
 using ObjParser;
 
 namespace GraphicsModeler.Extensions
@@ -31,7 +32,12 @@ namespace GraphicsModeler.Extensions
                 parser.Polygons.Add(vertList);
             }
 
-            return new Model(parser.Polygons, parser.Vectors);
+            return new Model(
+                new Mesh            
+                {
+                    Vertices = parser.Vectors,
+                    Polygons = parser.Polygons
+                });
         }
     }
 }
