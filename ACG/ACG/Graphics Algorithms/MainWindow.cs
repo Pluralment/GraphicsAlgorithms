@@ -11,9 +11,12 @@ namespace GraphicsModeler.MainWindow
 {
     public partial class MainWindow : Form
     {
-        private ObjectFileParser parser;
+        private readonly ObjectFileParser parser;
+        private Drawer _drawer = new Drawer();
+        
         private Model model;
         private Vector3 modelPosition;
+        private Vector3 modelRotation = Vector3.Zero;
         private Camera camera;
 
         private Vector3 viewCamera = new Vector3(0, 0, 10);
@@ -31,82 +34,93 @@ namespace GraphicsModeler.MainWindow
         private void MainWindow_Load(object sender, EventArgs e)
         {
             model = parser.CreateModel(@"gun.obj");
-            modelPosition = model.Position;
-            modelPosition.X = (float)_canvas.Width / 2;
-            modelPosition.Y = (float)_canvas.Height / 2;
-            modelPosition.Z = -(float)_canvas.Width;
+            model.Scale = 200f;
+            model.Rotation = Vector3.Zero;
+            
+            modelPosition = new Vector3(
+                (float)_canvas.Width / 2,
+                (float)_canvas.Height / 2,
+                _canvas.Width
+            );
+            
+            model.Position = modelPosition;
+
+
             _drawTimer.Enabled = true;
 
-            camera = new Camera(
-                new Vector3(0, 0, 10),
-                new Vector3(0, 0, -10f),
-                new Vector3(0f , 1f, 0f)
-                );
-            
-            // MOVE TO A CLASS.
-            model.Mesh.Vertices.ToWorld(modelPosition);
-            model.Mesh.Vertices.ScaleVectors(150f, modelPosition);
-            
-            model.Mesh.Vertices.ToView(camera.Position, camera.Target, camera.Up);
-            model.Mesh.Vertices.ToPerspective((float)(Math.PI / 2), _canvas.Width, _canvas.Height);
-            model.Mesh.Vertices.ToViewport(_canvas.Width, _canvas.Height);
-            //
+            camera = new Camera
+            {
+                Position = new Vector3(0, 0, 50),
+                Target = new Vector3(0, 0, -1f),
+                Up = new Vector3(0f , 1f, 0f),
+                Width = _canvas.Width,
+                Height = _canvas.Height
+            };
         }
 
         private void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Down)
             {
-                model.Mesh.Vertices.RotateVectors(new Vector3(0.2f, 0f, 0f), modelPosition);
+                modelPosition.Y -= 10f;
+                model.Position = modelPosition;
             }
             else if (e.KeyCode == Keys.Up)
             {
-                model.Mesh.Vertices.RotateVectors(new Vector3(-0.2f, 0f, 0f), modelPosition);
+                modelPosition.Y += 10f;
+                model.Position = modelPosition;
             }
             else if (e.KeyCode == Keys.D)
             {
-                model.Mesh.Vertices.RotateVectors(new Vector3(0f, 0f, 0.2f), modelPosition);
+                modelRotation.Y -= 0.2f;
+                model.Rotation = modelRotation;
             }
             else if (e.KeyCode == Keys.A)
             {
-                model.Mesh.Vertices.RotateVectors(new Vector3(0f, 0f, -0.2f), modelPosition);
+                modelRotation.Y += 0.2f;
+                model.Rotation = modelRotation;
             }
             else if (e.KeyCode == Keys.Right)
             {
-                model.Mesh.Vertices.RotateVectors(new Vector3(0f, 0.2f, 0f), modelPosition);
+                modelPosition.X += 10f;
+                model.Position = modelPosition;
             }
             else if (e.KeyCode == Keys.Left)
             {
-                model.Mesh.Vertices.RotateVectors(new Vector3(0f, -0.2f, 0f), modelPosition);
+                modelPosition.X -= 10f;
+                model.Position = modelPosition;
             }
             else if (e.KeyCode == Keys.W)
             {
-                model.Mesh.Vertices.ScaleVectors(1.2f, modelPosition);
+                model.Scale += 5f;
             }
             else if (e.KeyCode == Keys.S)
             {
-                model.Mesh.Vertices.ScaleVectors(0.8f, modelPosition);
+                model.Scale -= 5f;
             }
         }
-
-
+        
         private void MainWindow_Resize(object sender, EventArgs e)
         {
             _canvas.Size = this.ClientSize;
+            
+            if (camera != null)
+            {
+                camera.Width = _canvas.Width;
+                camera.Height = _canvas.Height;
+            }
+
             if (model != null)
             {
-                model.Mesh.Vertices.Translate(new Vector3(-modelPosition.X, -modelPosition.Y, -modelPosition.Z));
-                modelPosition = new Vector3((float)_canvas.Width / 2, (float)_canvas.Height / 2, 0);
-                model.Mesh.Vertices.Translate(modelPosition);
+                modelPosition = new Vector3((float)_canvas.Width / 2, (float)_canvas.Height / 2, modelPosition.Z);
+                model.Position = modelPosition;
             }
         }
-
+        
         private void _drawTimer_Tick(object sender, EventArgs e)
         {
-            // modelTransformator.Transform(model, camera);
-            // renderer.Render(bmp);
             var bmp = new ExtendedBitmap(_canvas.Width, _canvas.Height);
-            model.Draw(bmp);
+            _drawer.Draw(bmp, model, VertexTransformator.Transform(model, camera));
             _canvas.Image = bmp.Source;
         }
 
@@ -114,7 +128,7 @@ namespace GraphicsModeler.MainWindow
         {
             if (e.Button == MouseButtons.Left)
             {
-                model.Mesh.Vertices.RotateVectors(new Vector3(0.2f, 0f, 0f), modelPosition);
+                
             }
         }
     }
