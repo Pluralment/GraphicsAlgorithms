@@ -36,10 +36,12 @@ namespace GraphicsModeler.Scene
                 var point = points[i];
                 var transformedPoint = Vector4.Transform(point, transformedMatrix);
                 
+                // Implement Sutherland-Hodgman clipping //
+                
                 // Perspective divide to get NDC.
                 if (transformedPoint.W != 0.0f)
                 {
-                    transformedPoint /= transformedPoint.W;   
+                    transformedPoint /= transformedPoint.W;  
                 }
                 
                 transformedPoint = Vector4.Transform(transformedPoint, viewportMatrix);
@@ -80,8 +82,8 @@ namespace GraphicsModeler.Scene
             Vector3 translation)
         {
             var initMatrix = Matrix4x4.CreateWorld(
-                translation,
-                new Vector3(0, 0, -1),
+              translation,
+                             new Vector3(0, 0, -1),
                 new Vector3(0, -1, 0));
             var scaleMatrix = Matrix4x4.CreateScale(scaleFactor);
             var rotateMatrix = Matrix4x4.CreateRotationX(rotation.X)
