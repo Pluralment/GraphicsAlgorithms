@@ -10,115 +10,213 @@ namespace GraphicsModeler.Scene
 {
     public class Drawer
     {
+        private byte[] backBuffer;
+        private float[] depthBuffer;
+        private ExtendedBitmap bmp;
+        private int renderWidth;
+        private int renderHeight;
+        
         public Drawer() {}
 
-        public void Draw(ExtendedBitmap bmp, Model model, List<Vector4> vertices)
+        public void Draw(ExtendedBitmap bitmap, Model model, List<Vector4> vertices)
         {
-            DrawModel(bmp, model.Mesh.Polygons, vertices);
-            //Rasterize(bmp, model.Mesh.Polygons, vertices);
+            bmp = bitmap;
+            renderWidth = bmp.Width;
+            renderHeight = bmp.Height;
+            depthBuffer = new float[renderWidth * renderHeight];
+            ClearDepthBuffer();
+            
+            Rasterize(model.Mesh.Polygons, vertices);
         }
 
-        private void DrawModel(ExtendedBitmap bmp, List<List<int>> polygons, List<Vector4> vertices)
+        private void DrawMesh(List<List<int>> polygons, List<Vector4> vertices)
         {
             bmp.LockBits();
             Parallel.ForEach(polygons, p =>
             {
                 for (var i = 0; i < p.Count - 1; i++)
                 {
-                    DrawLine(bmp, vertices[p[i]], vertices[p[i + 1]], Color.DarkOliveGreen);
+                    DrawLine(vertices[p[i]], vertices[p[i + 1]], Color.DarkOliveGreen);
                 }
 
                 if (p.Count > 0)
-                    DrawLine(bmp, vertices[p.First()], vertices[p.Last()], Color.DarkOliveGreen);
-                
-                if (p.Count == 3)
-                    FillTriangle(bmp, vertices[p[0]], vertices[p[1]], vertices[p[2]], Color.DarkOliveGreen);
+                    DrawLine(vertices[p.First()], vertices[p.Last()], Color.DarkOliveGreen);
             });
             bmp.UnlockBits();
         }
         
-        private void Rasterize(ExtendedBitmap bmp, List<List<int>> polygons, List<Vector4> vertices)
+        private void Rasterize(List<List<int>> polygons, List<Vector4> vertices)
         {
             bmp.LockBits();
             Parallel.ForEach(polygons, p =>
             {
-                FillTriangle(bmp, vertices[p[0]], vertices[p[1]], vertices[p[2]], Color.DarkOliveGreen);
+                if (p.Count == 3)
+                {
+                    var p1 = vertices[p[0]];
+                    var p2 = vertices[p[1]];
+                    var p3 = vertices[p[2]];
+                    DrawTriangle(
+                        new Vector3(p1.X, p1.Y, p1.Z),
+                        new Vector3(p2.X, p2.Y, p2.Z),
+                        new Vector3(p3.X, p3.Y, p3.Z),
+                        Color.DarkOliveGreen);   
+                }
             });
             bmp.UnlockBits();
         }
+        
 
-        private void DrawLine(ExtendedBitmap bmp, Vector4 p1, Vector4 p2, Color color)
+        private void DrawLine(Vector4 p1, Vector4 p2, Color color)
         {
             var line = GetBresenhamLine(p1, p2);
             foreach (var pt in line)
                 bmp[(int)pt.X, (int)pt.Y] = Color.FromArgb(255, color);
         }
 
-        private void FillTriangle(ExtendedBitmap bmp, Vector4 v1, Vector4 v2, Vector4 v3, Color color)
+        private void ClearDepthBuffer()
         {
-            // sort three vertices to guarantee v1.Y > v2.Y > v3.Y
-            if (v1.Y > v2.Y && v2.Y > v3.Y) {}
-            else if (v1.Y > v3.Y && v3.Y > v2.Y) (v2, v3) = (v3, v2);
-            else if (v3.Y > v1.Y && v1.Y > v2.Y) (v1, v2, v3) = (v3, v1, v2);
-            else if (v2.Y > v1.Y && v1.Y > v3.Y) (v1, v2) = (v2, v1);
-            else if (v2.Y > v3.Y && v3.Y > v1.Y) (v1, v2, v3) = (v2, v3, v1);
-            else if (v3.Y > v2.Y && v2.Y > v1.Y) (v1, v3) = (v3, v1);
-            if (Math.Abs(v2.Y - v3.Y) < 0.1f)
-            {
-                FillTriangleBottom(bmp, v1, v2, v3, color);
-                return;
-            }
-            if (Math.Abs(v1.Y - v2.Y) < 0.1f)
-            {
-                FillTriangleTop(bmp, v1, v2, v3, color);
-                return;
-            }
-
-            var v4 = new Vector4(v1.X + ((v2.Y - v1.Y) / (v3.Y - v1.Y)) * (v3.X - v1.X), v2.Y, 0, 0);
-            FillTriangleTop(bmp, v2, v4, v1, color);
-            FillTriangleBottom(bmp, v3, v4, v2, color);
+            for (var i = 0; i < depthBuffer.Length; i++)
+                depthBuffer[i] = float.MaxValue;
         }
 
-        private void FillTriangleBottom(ExtendedBitmap bmp, Vector4 v1, Vector4 v2, Vector4 v3, Color color)
+        public void DrawPoint(Vector3 point, Color color)
         {
-            var invsploe1 = (v2.X - v1.X) / (v2.Y - v1.Y);
-            var invsploe2 = (v3.X - v1.X) / (v3.Y - v1.Y);
-            var curx1 = v1.X;
-            var curx2 = v1.X;
-
-            for (var scanlineY = v1.Y; scanlineY <= v2.Y; scanlineY++)
+            // Clipping what's visible on screen
+            if (point.X >= 0 && point.Y >= 0 && point.X < bmp.Width && point.Y < bmp.Height)
             {
-                DrawLine(
-                    bmp, 
-                    new Vector4(curx1, scanlineY, 0, 0),
-                    new Vector4(curx2, scanlineY, 0, 0),
-                    color
-                    );
-                curx1 += invsploe1;
-                curx2 += invsploe2;
+                PutPixel((int)point.X, (int)point.Y, point.Z, color);
+            }
+        }
+
+        private void PutPixel(int x, int y, float z, Color color)
+        {
+            var index = (x + y * renderWidth);
+
+            if (depthBuffer[index] < z)
+            {
+                return;
+            }
+
+            depthBuffer[index] = z;
+            bmp[x, y] = Color.FromArgb(255, color);
+        }
+        
+        // Clamping values to keep them between 0 and 1
+        float Clamp(float value, float min = 0, float max = 1)
+        {
+            return Math.Max(min, Math.Min(value, max));
+        }
+        
+        float Interpolate(float start, float end, float gradient)
+        {
+            return start + (end - start) * Clamp(gradient);
+        }
+        
+        // drawing line between 2 points from left to right
+        // papb -> pcpd
+        // pa, pb, pc, pd must then be sorted before
+        void ProcessScanLine(int y, Vector3 pa, Vector3 pb, Vector3 pc, Vector3 pd, Color color)
+        {
+            // Thanks to current Y, we can compute the gradient to compute others values like
+            // the starting X (sx) and ending X (ex) to draw between
+            // if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
+            var leftGradient = pa.Y != pb.Y ? (y - pa.Y) / (pb.Y - pa.Y) : 1;
+            var rightGradient = pc.Y != pd.Y ? (y - pc.Y) / (pd.Y - pc.Y) : 1;
+
+            var leftX = (int)Interpolate(pa.X, pb.X, leftGradient);
+            var rightX = (int)Interpolate(pc.X, pd.X, rightGradient);
+
+            var z1 = Interpolate(pa.Z, pb.Z, leftGradient);
+            var z2 = Interpolate(pc.Z, pd.Z, rightGradient);
+            
+            for (var x = leftX; x < rightX; x++)
+            {
+                var gradientZ = (x - leftX) / (float)(rightX - leftX);
+
+                var z = Interpolate(z1, z2, gradientZ);
+                
+                DrawPoint(new Vector3(x, y, z), color);
             }
         }
         
-        private void FillTriangleTop(ExtendedBitmap bmp, Vector4 v1, Vector4 v2, Vector4 v3, Color color)
+        public void DrawTriangle(Vector3 p1, Vector3 p2, Vector3 p3, Color color)
         {
-            var invsploe1 = (v3.X - v1.X) / (v3.Y - v1.Y);
-            var invsploe2 = (v3.X - v2.X) / (v3.Y - v2.Y);
-            var curx1 = v3.X;
-            var curx2 = v3.X;
-            
-            for (var scanlineY = v3.Y; scanlineY > v1.Y; scanlineY--)
+            // Sorting the points in order to always have this order on screen p1, p2 & p3
+            // with p1 always up (thus having the Y the lowest possible to be near the top screen)
+            // then p2 between p1 & p3
+            if (p1.Y > p2.Y) (p2, p1) = (p1, p2);
+
+            if (p2.Y > p3.Y) (p2, p3) = (p3, p2);
+
+            if (p1.Y > p2.Y) (p2, p1) = (p1, p2);
+
+            // inverse slopes
+            float dP1P2, dP1P3;
+
+            // http://en.wikipedia.org/wiki/Slope
+            // Computing inverse slopes
+            if (p2.Y - p1.Y > 0)
+                dP1P2 = (p2.X - p1.X) / (p2.Y - p1.Y);
+            else
+                dP1P2 = 0;
+
+            if (p3.Y - p1.Y > 0)
+                dP1P3 = (p3.X - p1.X) / (p3.Y - p1.Y);
+            else
+                dP1P3 = 0;
+
+            // First case where triangles are like that:
+            // P1
+            // -
+            // -- 
+            // - -
+            // -  -
+            // -   - P2
+            // -  -
+            // - -
+            // -
+            // P3
+            if (dP1P2 > dP1P3)
             {
-                DrawLine(
-                    bmp, 
-                    new Vector4(curx1, scanlineY, 0, 0),
-                    new Vector4(curx2, scanlineY, 0, 0),
-                    color
-                );
-                curx1 -= invsploe1;
-                curx2 -= invsploe2;
+                for (var y = (int)p1.Y; y <= (int)p3.Y; y++)
+                {
+                    if (y < p2.Y)
+                    {
+                        ProcessScanLine(y, p1, p3, p1, p2, color);
+                    }
+                    else
+                    {
+                        ProcessScanLine(y, p1, p3, p2, p3, color);
+                    }
+                }
+            }
+            // First case where triangles are like that:
+            //       P1
+            //        -
+            //       -- 
+            //      - -
+            //     -  -
+            // P2 -   - 
+            //     -  -
+            //      - -
+            //        -
+            //       P3
+            else
+            {
+                for (var y = (int)p1.Y; y <= (int)p3.Y; y++)
+                {
+                    if (y < p2.Y)
+                    {
+                        ProcessScanLine(y, p1, p2, p1, p3, color);
+                    }
+                    else
+                    {
+                        ProcessScanLine(y, p2, p3, p1, p3, color);
+                    }
+                }
             }
         }
-
+        
         private IEnumerable<Vector4> GetDDALine(Vector4 vector1, Vector4 vector2)
         {
             var dx = vector2.X - vector1.X;
