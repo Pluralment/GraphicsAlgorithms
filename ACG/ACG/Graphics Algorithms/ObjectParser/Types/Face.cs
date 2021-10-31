@@ -16,6 +16,7 @@ namespace ObjParser.Types
         public string UseMtl { get; set; }
         public int[] VertexIndexList { get; set; }
         public int[] TextureVertexIndexList { get; set; }
+        public int[] NormalVertexIndexList { get; set; }
 
         public void LoadFromStringArray(string[] data)
         {
@@ -28,23 +29,34 @@ namespace ObjParser.Types
             int vcount = data.Count() - 1;
             VertexIndexList = new int[vcount];
             TextureVertexIndexList = new int[vcount];
+            NormalVertexIndexList = new int[vcount];
 
 			bool success;
 
             for (int i = 0; i < vcount; i++)
             {
-                string[] parts = data[i + 1].Split('/');
+                string[] vertexParts = data[i + 1].Split('/');
 
                 int vindex;
-                success = int.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out vindex);
+                success = int.TryParse(vertexParts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out vindex);
                 if (!success) throw new ArgumentException("Could not parse parameter as int");
                 VertexIndexList[i] = vindex;
 
-                if (parts.Count() > 1)
+                if (vertexParts.Count() > 1)
                 {
-                    success = int.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out vindex);
-                    if (success) {
+                    success = int.TryParse(vertexParts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out vindex);
+                    if (success) 
+                    {
                         TextureVertexIndexList[i] = vindex;
+                    }
+
+                    if (vertexParts.Count() == 3)
+                    {
+                        success = int.TryParse(vertexParts[2], NumberStyles.Any, CultureInfo.InvariantCulture, out vindex);
+                        if (success) 
+                        {
+                            NormalVertexIndexList[i] = vindex;
+                        }
                     }
                 }
             }

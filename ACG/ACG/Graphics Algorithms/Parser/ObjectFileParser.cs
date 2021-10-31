@@ -15,6 +15,8 @@ namespace GraphicsModeler.Parser
         private string _content;
         private string[] _lines;
         private List<Vector4> _vectors;
+        private List<Vector3> _textures;
+        private List<Vector3> _normals;
         private List<List<int>> _polygons = new List<List<int>>();
         
 
@@ -22,6 +24,18 @@ namespace GraphicsModeler.Parser
         {
             get => _vectors;
             set => _vectors = value;
+        }
+        
+        public List<Vector3> Textures
+        {
+            get => _textures;
+            set => _textures = value;
+        }
+        
+        public List<Vector3> Normals
+        {
+            get => _normals;
+            set => _normals = value;
         }
         
         public List<List<int>> Polygons

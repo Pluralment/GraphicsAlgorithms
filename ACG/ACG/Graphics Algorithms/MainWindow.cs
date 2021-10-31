@@ -15,6 +15,8 @@ namespace GraphicsModeler.MainWindow
         private Drawer _drawer = new Drawer();
         
         private Model model;
+        private Vector3 modelPosition;
+        
         private Vector3 cameraPosition;
         private Vector3 modelRotation = Vector3.Zero;
         private Camera camera;
@@ -33,15 +35,17 @@ namespace GraphicsModeler.MainWindow
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
-            model = parser.CreateModel(@"Model2.obj");
+            model = parser.CreateModel(@"Model.obj");
             model.Scale = 200f;
             model.Rotation = Vector3.Zero;
 
-            model.Position = new Vector3(
+            modelPosition = new Vector3(
                 (float)_canvas.Width / 2,
                 (float)_canvas.Height / 2,
                 _canvas.Width
             );
+
+            model.Position = modelPosition;
 
             _drawTimer.Enabled = true;
             
@@ -61,13 +65,13 @@ namespace GraphicsModeler.MainWindow
         {
             if (e.KeyCode == Keys.Down)
             {
-                cameraPosition.Y += 10f;
-                camera.Position = cameraPosition;
+                modelPosition.Y += 10f;
+                model.Position = modelPosition;
             }
             else if (e.KeyCode == Keys.Up)
             {
-                cameraPosition.Y -= 10f;
-                camera.Position = cameraPosition;
+                modelPosition.Y -= 10f;
+                model.Position = modelPosition;
             }
             else if (e.KeyCode == Keys.D)
             {
@@ -81,13 +85,13 @@ namespace GraphicsModeler.MainWindow
             }
             else if (e.KeyCode == Keys.Right)
             {
-                cameraPosition.X -= 10f;
-                camera.Position = cameraPosition;
+                modelPosition.X -= 10f;
+                model.Position = modelPosition;
             }
             else if (e.KeyCode == Keys.Left)
             {
-                cameraPosition.X += 10f;
-                camera.Position = cameraPosition;
+                modelPosition.X += 10f;
+                model.Position = modelPosition;
             }
             else if (e.KeyCode == Keys.W)
             {
@@ -107,13 +111,11 @@ namespace GraphicsModeler.MainWindow
             {
                 camera.Width = _canvas.Width;
                 camera.Height = _canvas.Height;
-                cameraPosition = new Vector3((float)_canvas.Width / 2, (float)_canvas.Height / 2, cameraPosition.Z);
-                camera.Position = cameraPosition;
             }
 
             if (model != null)
             {
-                model.Position = new Vector3((float)_canvas.Width / 2, (float)_canvas.Height / 2, cameraPosition.Z);
+                model.Position = new Vector3((float)_canvas.Width / 2, (float)_canvas.Height / 2, model.Position.Z);
             }
         }
         

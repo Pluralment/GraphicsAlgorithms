@@ -69,6 +69,7 @@
     <Compile Include="ObjectParser\Types\Face.cs" />
     <Compile Include="ObjectParser\Types\IType.cs" />
     <Compile Include="ObjectParser\Types\Material.cs" />
+    <Compile Include="ObjectParser\Types\NormalVertex.cs" />
     <Compile Include="ObjectParser\Types\TextureVertex.cs" />
     <Compile Include="ObjectParser\Types\Vertex.cs" />
     <Compile Include="Parser\ObjectFileParser.cs" />
@@ -77,6 +78,7 @@
     <Compile Include="Scene\Camera.cs" />
     <Compile Include="Scene\Drawer.cs" />
     <Compile Include="Scene\Mesh.cs" />
+    <Compile Include="Scene\Polygon.cs" />
     <Compile Include="Scene\VertexTransformator.cs" />
     <Compile Include="VectorExtensions\Extensions.cs" />
     <EmbeddedResource Include="MainWindow.resx">
