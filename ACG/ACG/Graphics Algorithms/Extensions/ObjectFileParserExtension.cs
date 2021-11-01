@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using GraphicsModeler.Helper;
 using GraphicsModeler.Parser;
@@ -35,15 +36,40 @@ namespace GraphicsModeler.Extensions
                 parser.Textures.Add(new Vector3((float)texture.X, (float)texture.Y, 0));
             }
             
-            // List<Face> -> List<List<int>>
+            // List<Face> -> List<Polygon>
             foreach (var face in obj.FaceList)
             {
+                /*var verticesList = new List<int>();
+                for (var i = 0; i < face.VertexIndexList.Length; i++)
+                {
+                    verticesList.Add(face.VertexIndexList[i] - 1);
+                }
+                parser.Polygons.Add(verticesList);*/
                 var verticesList = new List<int>();
                 for (var i = 0; i < face.VertexIndexList.Length; i++)
                 {
                     verticesList.Add(face.VertexIndexList[i] - 1);
                 }
-                parser.Polygons.Add(verticesList);
+                
+                var normalsList = new List<int>();
+                for (var i = 0; i < face.NormalVertexIndexList.Length; i++)
+                {
+                    normalsList.Add(face.NormalVertexIndexList[i] - 1);
+                }
+                
+                var texturesList = new List<int>();
+                for (var i = 0; i < face.TextureVertexIndexList.Length; i++)
+                {
+                    texturesList.Add(face.TextureVertexIndexList[i] - 1);
+                }
+                
+                Polygon polygon = new Polygon()
+                {
+                    VerticesIndexes = verticesList,
+                    NormalsIndexes = normalsList,
+                    TexturesIndexes = texturesList
+                };
+                parser.Polygons.Add(polygon);
             }
 
             return new Model(

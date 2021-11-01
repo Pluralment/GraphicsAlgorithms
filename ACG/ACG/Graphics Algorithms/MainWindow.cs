@@ -122,7 +122,7 @@ namespace GraphicsModeler.MainWindow
         private void _drawTimer_Tick(object sender, EventArgs e)
         {
             var bmp = new ExtendedBitmap(_canvas.Width, _canvas.Height);
-            _drawer.Draw(bmp, model, camera);
+            _drawer.Draw(bmp, VertexTransformator.Transform(model, camera), camera);
             _canvas.Image = bmp.Source;
         }
 

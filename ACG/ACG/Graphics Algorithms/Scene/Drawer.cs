@@ -26,9 +26,9 @@ namespace GraphicsModeler.Scene
             depthBuffer = new float[renderWidth * renderHeight];
             ClearDepthBuffer();
 
-            List<Vector4> vertices = VertexTransformator.Transform(model, camera);
+            //List<Vector4> vertices = VertexTransformator.Transform(model, camera);
             
-            Rasterize(model.Mesh.Polygons, vertices);
+            Rasterize(model.Mesh.Polygons, model.Mesh.Vertices);
         }
 
         private void DrawMesh(List<List<int>> polygons, List<Vector4> vertices)
@@ -47,16 +47,16 @@ namespace GraphicsModeler.Scene
             bmp.UnlockBits();
         }
         
-        private void Rasterize(List<List<int>> polygons, List<Vector4> vertices)
+        private void Rasterize(List<Polygon> polygons, List<Vector4> vertices)
         {
             bmp.LockBits();
             Parallel.ForEach(polygons, p =>
             {
-                if (p.Count == 3)
+                if (p.VerticesIndexes.Count == 3)
                 {
-                    var p1 = vertices[p[0]];
-                    var p2 = vertices[p[1]];
-                    var p3 = vertices[p[2]];
+                    var p1 = vertices[p.VerticesIndexes[0]];
+                    var p2 = vertices[p.VerticesIndexes[1]];
+                    var p3 = vertices[p.VerticesIndexes[2]];
                     DrawTriangle(
                         new Vector3(p1.X, p1.Y, p1.Z),
                         new Vector3(p2.X, p2.Y, p2.Z),

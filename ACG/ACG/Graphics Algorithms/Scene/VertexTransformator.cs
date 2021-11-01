@@ -22,15 +22,22 @@ namespace GraphicsModeler.Scene
             return transformedMatrix;
         }
         
-        public static List<Vector4> Transform(Model model, Camera camera)
+        public static Model Transform(Model model, Camera camera)
         {
             var points = model.Mesh.Vertices;
+            var normals = model.Normals;
 
             var transformedMatrix = GetTransformMatrix(model, camera);
             var viewportMatrix = GetViewportMatrix(camera.Width, camera.Height);
+            var worldMatrix = GetWorldMatrix(model.Scale, model.Rotation, model.Position);
             
             
-            
+            var worldNormals = new Vector3[normals.Count];
+            Parallel.For(0, normals.Count, i =>
+            {
+                var normal = Vector3.Transform(normals[i], worldMatrix);
+                worldNormals[i] = normal;
+            });
             
             
             var transformedPoints = new Vector4[points.Count];
@@ -38,6 +45,9 @@ namespace GraphicsModeler.Scene
             Parallel.For(0, points.Count, i =>
             {
                 var point = points[i];
+                
+                var worldPoint = Vector3.Transform(new Vector3(point.X, point.Y, point.Z),
+                    worldMatrix);
                 var transformedPoint = Vector4.Transform(point, transformedMatrix);
                 
                 // Implement Sutherland-Hodgman clipping //
@@ -49,10 +59,23 @@ namespace GraphicsModeler.Scene
                 }
                 
                 transformedPoint = Vector4.Transform(transformedPoint, viewportMatrix);
-                
+
+                worldPoints[i] = worldPoint;
                 transformedPoints[i] = transformedPoint;
             });
-            return transformedPoints.ToList();
+
+            var transformedMesh = new Mesh()
+            {
+                Vertices = transformedPoints.ToList(),
+                Polygons = model.Mesh.Polygons
+            };
+            
+            return new Model(transformedMesh)
+            {
+                WorldVertices = worldPoints.ToList(),
+                Normals = worldNormals.ToList()
+            };
+            //return transformedPoints.ToList();
         }
         
         private static Matrix4x4 GetViewportMatrix(float width, float height,

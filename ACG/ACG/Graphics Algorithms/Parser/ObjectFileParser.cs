@@ -17,7 +17,7 @@ namespace GraphicsModeler.Parser
         private List<Vector4> _vectors;
         private List<Vector3> _textures;
         private List<Vector3> _normals;
-        private List<List<int>> _polygons = new List<List<int>>();
+        private List<Polygon> _polygons = new List<Polygon>();
         
 
         public List<Vector4> Vectors
@@ -38,7 +38,7 @@ namespace GraphicsModeler.Parser
             set => _normals = value;
         }
         
-        public List<List<int>> Polygons
+        public List<Polygon> Polygons
         {
             get => _polygons;
             set => _polygons = value;
@@ -50,6 +50,7 @@ namespace GraphicsModeler.Parser
         }
 
         
+        /*
         public ObjectFileParser(string fileName)
         {
             if (fileName is null)
@@ -91,6 +92,6 @@ namespace GraphicsModeler.Parser
                     Vertices = _vectors,
                     Polygons = _polygons
                 });
-        }
+        }*/
     }
 }
