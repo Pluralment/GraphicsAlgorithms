@@ -10,6 +10,8 @@ namespace GraphicsModeler.Helper
         public List<Vector3> Textures { get; set; } 
         public List<Vector3> Normals { get; set; } 
         
+        public List<Vector3> WorldVertices { get; set; } 
+        
         public Vector3 Position { get; set; }
         public float Scale { get; set; }
         public Vector3 Rotation { get; set; }

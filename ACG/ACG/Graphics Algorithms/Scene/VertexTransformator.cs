@@ -29,9 +29,13 @@ namespace GraphicsModeler.Scene
             var transformedMatrix = GetTransformMatrix(model, camera);
             var viewportMatrix = GetViewportMatrix(camera.Width, camera.Height);
             
-            var transformedPoints = new Vector4[points.Count];
             
-            Parallel.For(0, model.Mesh.Vertices.Count, i =>
+            
+            
+            
+            var transformedPoints = new Vector4[points.Count];
+            var worldPoints = new Vector3[points.Count];
+            Parallel.For(0, points.Count, i =>
             {
                 var point = points[i];
                 var transformedPoint = Vector4.Transform(point, transformedMatrix);

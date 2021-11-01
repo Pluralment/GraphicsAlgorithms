@@ -18,13 +18,15 @@ namespace GraphicsModeler.Scene
         
         public Drawer() {}
 
-        public void Draw(ExtendedBitmap bitmap, Model model, List<Vector4> vertices)
+        public void Draw(ExtendedBitmap bitmap, Model model, Camera camera)
         {
             bmp = bitmap;
             renderWidth = bmp.Width;
             renderHeight = bmp.Height;
             depthBuffer = new float[renderWidth * renderHeight];
             ClearDepthBuffer();
+
+            List<Vector4> vertices = VertexTransformator.Transform(model, camera);
             
             Rasterize(model.Mesh.Polygons, vertices);
         }
