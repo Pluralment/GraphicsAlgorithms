@@ -73,7 +73,8 @@ namespace GraphicsModeler.Scene
             return new Model(transformedMesh)
             {
                 WorldVertices = worldPoints.ToList(),
-                Normals = worldNormals.ToList()
+                Normals = worldNormals.ToList(),
+                Position = model.Position
             };
             //return transformedPoints.ToList();
         }

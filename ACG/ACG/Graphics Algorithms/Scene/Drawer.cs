@@ -15,14 +15,18 @@ namespace GraphicsModeler.Scene
         private ExtendedBitmap bmp;
         private int renderWidth;
         private int renderHeight;
-        
+        private Vector3 lightPos;
+        private Model _model;
+
         public Drawer() {}
 
         public void Draw(ExtendedBitmap bitmap, Model model, Camera camera)
         {
             bmp = bitmap;
+            _model = model;
             renderWidth = bmp.Width;
             renderHeight = bmp.Height;
+            lightPos = new Vector3(model.Position.X + 10, model.Position.Y + 10, model.Position.Z + model.Position.Z/2);
             depthBuffer = new float[renderWidth * renderHeight];
             ClearDepthBuffer();
 
@@ -58,6 +62,7 @@ namespace GraphicsModeler.Scene
                     var p2 = vertices[p.VerticesIndexes[1]];
                     var p3 = vertices[p.VerticesIndexes[2]];
                     DrawTriangle(
+                        p,
                         new Vector3(p1.X, p1.Y, p1.Z),
                         new Vector3(p2.X, p2.Y, p2.Z),
                         new Vector3(p3.X, p3.Y, p3.Z),
@@ -81,16 +86,19 @@ namespace GraphicsModeler.Scene
                 depthBuffer[i] = float.MaxValue;
         }
 
-        public void DrawPoint(Vector3 point, Color color)
+        public void DrawPoint(Vector3 point, Color color, float intensity)
         {
             // Clipping what's visible on screen
             if (point.X >= 0 && point.Y >= 0 && point.X < bmp.Width && point.Y < bmp.Height)
             {
-                PutPixel((int)point.X, (int)point.Y, point.Z, color);
+                int red = (int)(color.R * intensity);
+                int green = (int)(color.G * intensity);
+                int blue = (int)(color.B * intensity);
+                PutPixel((int)point.X, (int)point.Y, point.Z, red, green, blue);
             }
         }
 
-        private void PutPixel(int x, int y, float z, Color color)
+        private void PutPixel(int x, int y, float z, int red, int green, int blue)
         {
             var index = (x + y * renderWidth);
 
@@ -100,7 +108,7 @@ namespace GraphicsModeler.Scene
             }
 
             depthBuffer[index] = z;
-            bmp[x, y] = Color.FromArgb(255, color);
+            bmp[x, y] = Color.FromArgb(255, red, green, blue);
         }
         
         // Clamping values to keep them between 0 and 1
@@ -117,13 +125,13 @@ namespace GraphicsModeler.Scene
         // drawing line between 2 points from left to right
         // papb -> pcpd
         // pa, pb, pc, pd must then be sorted before
-        void ProcessScanLine(int y, Vector3 pa, Vector3 pb, Vector3 pc, Vector3 pd, Color color)
+        void ProcessScanLine(ScanLineData data, Vector3 pa, Vector3 pb, Vector3 pc, Vector3 pd, Color color)
         {
             // Thanks to current Y, we can compute the gradient to compute others values like
             // the starting X (sx) and ending X (ex) to draw between
             // if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
-            var leftGradient = pa.Y != pb.Y ? (y - pa.Y) / (pb.Y - pa.Y) : 1;
-            var rightGradient = pc.Y != pd.Y ? (y - pc.Y) / (pd.Y - pc.Y) : 1;
+            var leftGradient = pa.Y != pb.Y ? (data.CurrentY - pa.Y) / (pb.Y - pa.Y) : 1;
+            var rightGradient = pc.Y != pd.Y ? (data.CurrentY - pc.Y) / (pd.Y - pc.Y) : 1;
 
             var leftX = (int)Interpolate(pa.X, pb.X, leftGradient);
             var rightX = (int)Interpolate(pc.X, pd.X, rightGradient);
@@ -136,12 +144,27 @@ namespace GraphicsModeler.Scene
                 var gradientZ = (x - leftX) / (float)(rightX - leftX);
 
                 var z = Interpolate(z1, z2, gradientZ);
-                
-                DrawPoint(new Vector3(x, y, z), color);
+
+                // changing the color value using the cosine of the angle
+                // between the light vector and the normal vector
+                var intensity = data.NDotla;
+                DrawPoint(new Vector3(x, data.CurrentY, z), color, intensity);
             }
         }
         
-        public void DrawTriangle(Vector3 p1, Vector3 p2, Vector3 p3, Color color)
+        // Compute the cosine of the angle between the light vector and the normal vector
+        // Returns a value between 0 and 1
+        float ComputeNDotL(Vector3 vertex, Vector3 normal, Vector3 lightPosition) 
+        {
+            var lightDirection = lightPosition - vertex;
+
+            normal = Vector3.Normalize(normal);
+            lightDirection = Vector3.Normalize(lightDirection);
+
+            return Math.Max(0, Vector3.Dot(normal, lightDirection));
+        }
+        
+        public void DrawTriangle(Polygon polygon, Vector3 p1, Vector3 p2, Vector3 p3, Color color)
         {
             // Sorting the points in order to always have this order on screen p1, p2 & p3
             // with p1 always up (thus having the Y the lowest possible to be near the top screen)
@@ -151,6 +174,26 @@ namespace GraphicsModeler.Scene
             if (p2.Y > p3.Y) (p2, p3) = (p3, p2);
 
             if (p1.Y > p2.Y) (p2, p1) = (p1, p2);
+
+
+            var n1 = _model.Normals[polygon.NormalsIndexes[0]];
+            var n2 = _model.Normals[polygon.NormalsIndexes[1]];
+            var n3 = _model.Normals[polygon.NormalsIndexes[2]];
+
+            var wp1 = _model.WorldVertices[polygon.VerticesIndexes[0]];
+            var wp2 = _model.WorldVertices[polygon.VerticesIndexes[1]];
+            var wp3 = _model.WorldVertices[polygon.VerticesIndexes[2]];
+            
+            
+            // Computing the cos of the angle between the light vector and the normal vector
+            // it will return a value between 0 and 1 that will be used as the intensity of the color
+            float nDotL1 = ComputeNDotL(wp1, n1, lightPos);
+            float nDotL2 = ComputeNDotL(wp2, n2, lightPos);
+            float nDotL3 = ComputeNDotL(wp3, n3, lightPos);
+            float nDotL = (nDotL1 + nDotL2 + nDotL3) / 3;
+            
+            var data = new ScanLineData { NDotla = nDotL };
+            
 
             // inverse slopes
             float dP1P2, dP1P3;
@@ -182,13 +225,15 @@ namespace GraphicsModeler.Scene
             {
                 for (var y = (int)p1.Y; y <= (int)p3.Y; y++)
                 {
+                    data.CurrentY = y;
+                    
                     if (y < p2.Y)
                     {
-                        ProcessScanLine(y, p1, p3, p1, p2, color);
+                        ProcessScanLine(data, p1, p3, p1, p2, color);
                     }
                     else
                     {
-                        ProcessScanLine(y, p1, p3, p2, p3, color);
+                        ProcessScanLine(data, p1, p3, p2, p3, color);
                     }
                 }
             }
@@ -207,13 +252,15 @@ namespace GraphicsModeler.Scene
             {
                 for (var y = (int)p1.Y; y <= (int)p3.Y; y++)
                 {
+                    data.CurrentY = y;
+                    
                     if (y < p2.Y)
                     {
-                        ProcessScanLine(y, p1, p2, p1, p3, color);
+                        ProcessScanLine(data, p1, p2, p1, p3, color);
                     }
                     else
                     {
-                        ProcessScanLine(y, p2, p3, p1, p3, color);
+                        ProcessScanLine(data, p2, p3, p1, p3, color);
                     }
                 }
             }
@@ -314,6 +361,15 @@ namespace GraphicsModeler.Scene
 
                 d += 2 * dy;
             }
+        }
+        
+        private struct ScanLineData
+        {
+            public int CurrentY;
+            public float NDotla;
+            public float NDotlb;
+            public float NDotlc;
+            public float NDotld;
         }
     }
 }

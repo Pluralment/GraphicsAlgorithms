@@ -35,7 +35,7 @@ namespace GraphicsModeler.MainWindow
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
-            model = parser.CreateModel(@"Model.obj");
+            model = parser.CreateModel(@"Model2.obj");
             model.Scale = 200f;
             model.Rotation = Vector3.Zero;
 
@@ -95,11 +95,13 @@ namespace GraphicsModeler.MainWindow
             }
             else if (e.KeyCode == Keys.W)
             {
-                model.Scale += 5f;
+                modelPosition.Z += 10f;
+                model.Position = modelPosition;
             }
             else if (e.KeyCode == Keys.S)
             {
-                model.Scale -= 5f;
+                modelPosition.Z -= 10f;
+                model.Position = modelPosition;
             }
         }
         
