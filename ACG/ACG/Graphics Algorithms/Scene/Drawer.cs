@@ -26,27 +26,27 @@ namespace GraphicsModeler.Scene
             _model = model;
             renderWidth = bmp.Width;
             renderHeight = bmp.Height;
-            lightPos = new Vector3(model.Position.X + 10, model.Position.Y + 10, model.Position.Z + model.Position.Z/2);
+            //lightPos = new Vector3(model.Position.X + 10, model.Position.Y + 10, model.Position.Z + model.Position.Z/2);
+            lightPos = new Vector3(renderWidth, renderHeight, renderWidth);
             depthBuffer = new float[renderWidth * renderHeight];
             ClearDepthBuffer();
 
-            //List<Vector4> vertices = VertexTransformator.Transform(model, camera);
-            
-            Rasterize(model.Mesh.Polygons, model.Mesh.Vertices);
+            Rasterize(_model.Mesh.Polygons, _model.Mesh.Vertices);
+            //DrawMesh(model.Mesh.Polygons, model.Mesh.Vertices);
         }
 
-        private void DrawMesh(List<List<int>> polygons, List<Vector4> vertices)
+        private void DrawMesh(List<Polygon> polygons, List<Vector4> vertices)
         {
             bmp.LockBits();
             Parallel.ForEach(polygons, p =>
             {
-                for (var i = 0; i < p.Count - 1; i++)
+                for (var i = 0; i < p.VerticesIndexes.Count - 1; i++)
                 {
-                    DrawLine(vertices[p[i]], vertices[p[i + 1]], Color.DarkOliveGreen);
+                    DrawLine(vertices[p.VerticesIndexes[i]], vertices[p.VerticesIndexes[i + 1]], Color.DarkOliveGreen);
                 }
 
-                if (p.Count > 0)
-                    DrawLine(vertices[p.First()], vertices[p.Last()], Color.DarkOliveGreen);
+                if (p.VerticesIndexes.Count > 0)
+                    DrawLine(vertices[p.VerticesIndexes.First()], vertices[p.VerticesIndexes.Last()], Color.DarkOliveGreen);
             });
             bmp.UnlockBits();
         }
@@ -83,13 +83,13 @@ namespace GraphicsModeler.Scene
         private void ClearDepthBuffer()
         {
             for (var i = 0; i < depthBuffer.Length; i++)
-                depthBuffer[i] = float.MaxValue;
+                depthBuffer[i] = float.MinValue;
         }
 
         public void DrawPoint(Vector3 point, Color color, float intensity)
         {
             // Clipping what's visible on screen
-            if (point.X >= 0 && point.Y >= 0 && point.X < bmp.Width && point.Y < bmp.Height)
+            if (point.X >= 0 && point.Y >= 0 && point.X < renderWidth && point.Y < renderHeight)
             {
                 int red = (int)(color.R * intensity);
                 int green = (int)(color.G * intensity);
@@ -102,7 +102,7 @@ namespace GraphicsModeler.Scene
         {
             var index = (x + y * renderWidth);
 
-            if (depthBuffer[index] < z)
+            if (depthBuffer[index] > z)
             {
                 return;
             }

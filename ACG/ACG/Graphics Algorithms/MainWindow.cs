@@ -35,7 +35,7 @@ namespace GraphicsModeler.MainWindow
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
-            model = parser.CreateModel(@"Model2.obj");
+            model = parser.CreateModel(@"Model.obj");
             model.Scale = 200f;
             model.Rotation = Vector3.Zero;
 
@@ -49,7 +49,7 @@ namespace GraphicsModeler.MainWindow
 
             _drawTimer.Enabled = true;
             
-            cameraPosition = new Vector3(0, 0, 50);
+            cameraPosition = new Vector3(0, 0, 1);
 
             camera = new Camera
             {
@@ -117,7 +117,9 @@ namespace GraphicsModeler.MainWindow
 
             if (model != null)
             {
-                model.Position = new Vector3((float)_canvas.Width / 2, (float)_canvas.Height / 2, model.Position.Z);
+                //model.Position = new Vector3((float)_canvas.Width / 2, (float)_canvas.Height / 2, model.Position.Z);
+                modelPosition = new Vector3((float)_canvas.Width / 2, (float)_canvas.Height / 2, modelPosition.Z);
+                model.Position = modelPosition;
             }
         }
         
