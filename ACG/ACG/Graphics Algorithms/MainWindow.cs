@@ -45,7 +45,7 @@ namespace GraphicsModeler.MainWindow
 
             _drawTimer.Enabled = true;
             
-            cameraPosition = new Vector3(0, 0, 5);
+            cameraPosition = new Vector3(0, 0, 3);
 
             camera = new Camera
             {

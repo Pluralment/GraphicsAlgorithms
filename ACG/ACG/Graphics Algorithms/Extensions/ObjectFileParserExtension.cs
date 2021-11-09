@@ -16,10 +16,10 @@ namespace GraphicsModeler.Extensions
             obj.LoadObj(fileName);
 
             // List<Vertex> -> List<Vector4>.
-            parser.Vectors = new List<Vector4>();
+            parser.Vectors = new List<Vector3>();
             foreach (var vertex in obj.VertexList)
             {
-                parser.Vectors.Add(new Vector4((float)vertex.X, (float)vertex.Y, (float)vertex.Z, 1));
+                parser.Vectors.Add(new Vector3((float)vertex.X, (float)vertex.Y, (float)vertex.Z));
             }
             
             // List<Normal> -> List<Vector3>.

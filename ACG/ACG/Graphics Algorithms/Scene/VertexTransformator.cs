@@ -48,7 +48,11 @@ namespace GraphicsModeler.Scene
         
         public static Model Transform(Model model, Camera camera)
         {
-            var points = model.Mesh.Vertices;
+            var points = new List<Vector4>();
+            foreach (var p in model.Mesh.Vertices)
+            {
+                points.Add(new Vector4(p.X, p.Y, p.Z, 1));
+            }
             var normals = model.Normals;
             var worldNormals = TransformNormals(normals, model.Rotation);
             
@@ -57,7 +61,7 @@ namespace GraphicsModeler.Scene
             var viewportMatrix = GetViewportMatrix(camera.Width, camera.Height);
             var worldMatrix = GetWorldMatrix(model.Scale, model.Rotation, model.Position);
             
-            var transformedPoints = new Vector4[points.Count];
+            var transformedPoints = new Vector3[points.Count];
             var worldPoints = new Vector3[points.Count];
             Parallel.For(0, points.Count, i =>
             {
@@ -65,7 +69,6 @@ namespace GraphicsModeler.Scene
                 
                 var worldPoint = Vector3.Transform(new Vector3(point.X, point.Y, point.Z),
                     worldMatrix);
-                
                 
                 var transformedPoint = Vector4.Transform(point, transformedMatrix);
                 
@@ -80,7 +83,7 @@ namespace GraphicsModeler.Scene
                 transformedPoint = Vector4.Transform(transformedPoint, viewportMatrix);
 
                 worldPoints[i] = worldPoint;
-                transformedPoints[i] = transformedPoint;
+                transformedPoints[i] = new Vector3(transformedPoint.X, transformedPoint.Y, transformedPoint.Z);
             });
 
             var transformedMesh = new Mesh()

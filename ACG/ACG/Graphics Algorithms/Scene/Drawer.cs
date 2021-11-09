@@ -17,19 +17,21 @@ namespace GraphicsModeler.Scene
         private int renderHeight;
         private Vector3 lightPos;
         private Model _model;
+        private Camera _camera;
 
         public Drawer() {}
 
         public void Draw(ExtendedBitmap bitmap, Model model, Camera camera)
         {
-            InitNewFrame(bitmap, model);
-            Rasterize(_model.Mesh.Polygons, _model.Mesh.Vertices);
+            InitNewFrame(bitmap, model, camera);
+            Rasterize();
         }
 
-        private void InitNewFrame(ExtendedBitmap bitmap, Model model)
+        private void InitNewFrame(ExtendedBitmap bitmap, Model model, Camera camera)
         {
             bmp = bitmap;
             _model = model;
+            _camera = camera;
             renderWidth = bmp.Width;
             renderHeight = bmp.Height;
             lightPos = new Vector3(2, 2, 2);
@@ -53,25 +55,34 @@ namespace GraphicsModeler.Scene
             bmp.UnlockBits();
         }
         
-        private void Rasterize(List<Polygon> polygons, List<Vector4> vertices)
+        private void Rasterize()
         {
+            var polygons = _model.Mesh.Polygons;
+            var vertices = _model.Mesh.Vertices;
+            
             bmp.LockBits();
             Parallel.ForEach(polygons, p =>
             {
-                if (p.VerticesIndexes.Count == 3)
-                {
-                    var p1 = vertices[p.VerticesIndexes[0]];
-                    var p2 = vertices[p.VerticesIndexes[1]];
-                    var p3 = vertices[p.VerticesIndexes[2]];
-                    DrawTriangle(
-                        p,
-                        new Vector3(p1.X, p1.Y, p1.Z),
-                        new Vector3(p2.X, p2.Y, p2.Z),
-                        new Vector3(p3.X, p3.Y, p3.Z),
-                        Color.DarkOliveGreen);   
-                }
+                if (!BackfaceCulling(p)) return;
+                ProcessTriangle(p, vertices);
             });
             bmp.UnlockBits();
+        }
+
+        private void ProcessTriangle(Polygon p, List<Vector3> vertices)
+        {
+            if (p.VerticesIndexes.Count == 3)
+            {
+                var p1 = vertices[p.VerticesIndexes[0]];
+                var p2 = vertices[p.VerticesIndexes[1]];
+                var p3 = vertices[p.VerticesIndexes[2]];
+                DrawTriangle(
+                    p,
+                    new Vector3(p1.X, p1.Y, p1.Z),
+                    new Vector3(p2.X, p2.Y, p2.Z),
+                    new Vector3(p3.X, p3.Y, p3.Z),
+                    Color.DarkOliveGreen);   
+            }
         }
         
 
@@ -88,7 +99,7 @@ namespace GraphicsModeler.Scene
                 depthBuffer[i] = float.MaxValue;
         }
 
-        public void DrawPoint(Vector3 point, Color color, float intensity)
+        private void DrawPoint(Vector3 point, Color color, float intensity)
         {
             // Clipping what's visible on screen
             if (point.X >= 0 && point.Y >= 0 && point.X < renderWidth && point.Y < renderHeight)
@@ -165,6 +176,37 @@ namespace GraphicsModeler.Scene
 
             return Math.Max(0, Vector3.Dot(normal, lightDirection));
         }
+
+        private bool Cull(Vector3 faceNormal, Vector3 point)
+        {
+            var result = true;
+            
+            var viewPos = _camera.Position;
+            
+            var viewDirection = point - viewPos;
+
+            faceNormal = Vector3.Normalize(faceNormal);
+            viewDirection = Vector3.Normalize(viewDirection);
+
+            if (Vector3.Dot(faceNormal, viewDirection) > 0.0f)
+                result = false;
+
+            return result;
+        }
+
+        private bool BackfaceCulling(Polygon polygon)
+        {
+            var n1 = _model.Normals[polygon.NormalsIndexes[0]];
+            var n2 = _model.Normals[polygon.NormalsIndexes[1]];
+            var n3 = _model.Normals[polygon.NormalsIndexes[2]];
+
+            var wp1 = _model.WorldVertices[polygon.VerticesIndexes[0]];
+            var wp2 = _model.WorldVertices[polygon.VerticesIndexes[1]];
+            var wp3 = _model.WorldVertices[polygon.VerticesIndexes[2]];
+
+            var centralPoint = (wp1 + wp2 + wp3) / 3;
+            return Cull(Vector3.Cross(wp2 - wp1, wp3 - wp1), centralPoint);
+        }
         
         public void DrawTriangle(Polygon polygon, Vector3 p1, Vector3 p2, Vector3 p3, Color color)
         {
@@ -185,8 +227,8 @@ namespace GraphicsModeler.Scene
             var wp1 = _model.WorldVertices[polygon.VerticesIndexes[0]];
             var wp2 = _model.WorldVertices[polygon.VerticesIndexes[1]];
             var wp3 = _model.WorldVertices[polygon.VerticesIndexes[2]];
-            
-            
+
+
             // Computing the cos of the angle between the light vector and the normal vector
             // it will return a value between 0 and 1 that will be used as the intensity of the color
             float nDotL1 = ComputeNDotL(wp1, n1, lightPos);

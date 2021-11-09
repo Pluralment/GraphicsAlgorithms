@@ -7,7 +7,7 @@ namespace GraphicsModeler.Scene
     {
         //public List<List<int>> Polygons { get; set; }
         public List<Polygon> Polygons { get; set; }
-        public List<Vector4> Vertices { get; set; }
+        public List<Vector3> Vertices { get; set; }
 
         public Mesh() { }
     }
