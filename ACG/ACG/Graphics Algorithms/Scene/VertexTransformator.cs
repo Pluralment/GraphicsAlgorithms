@@ -15,30 +15,47 @@ namespace GraphicsModeler.Scene
             var perspectiveMatrix = GetPerspectiveMatrix(
                 camera.Fov,
                 (float)camera.Width / camera.Height,
-                1f,
+                0.1f,
                 100f
             );
             var transformedMatrix = worldMatrix * viewMatrix * perspectiveMatrix;
             return transformedMatrix;
         }
         
+        private static Matrix4x4 GetNormalMatrix(Vector3 rotation)
+        {
+            return Matrix4x4.CreateRotationX(rotation.X)
+                               * Matrix4x4.CreateRotationY(rotation.Y) 
+                               * Matrix4x4.CreateRotationZ(rotation.Z);
+        }
+
+        private static List<Vector3> TransformNormals(List<Vector3> normals, Vector3 rotation)
+        {
+            var worldNormals = new Vector3[normals.Count];
+            var normalMatrix = GetNormalMatrix(rotation);
+            Parallel.For(0, normals.Count, i =>
+            {
+                var normal = Vector3.Transform(normals[i], normalMatrix);
+                worldNormals[i] = normal;
+            });
+            return worldNormals.ToList();
+        }
+
+        /*private static List<Vector4> TransformVertices(Model model)
+        {
+            
+        }*/
+        
         public static Model Transform(Model model, Camera camera)
         {
             var points = model.Mesh.Vertices;
             var normals = model.Normals;
-
+            var worldNormals = TransformNormals(normals, model.Rotation);
+            
+            
             var transformedMatrix = GetTransformMatrix(model, camera);
             var viewportMatrix = GetViewportMatrix(camera.Width, camera.Height);
             var worldMatrix = GetWorldMatrix(model.Scale, model.Rotation, model.Position);
-            
-            
-            var worldNormals = new Vector3[normals.Count];
-            Parallel.For(0, normals.Count, i =>
-            {
-                var normal = Vector3.Transform(normals[i], worldMatrix);
-                worldNormals[i] = normal;
-            });
-            
             
             var transformedPoints = new Vector4[points.Count];
             var worldPoints = new Vector3[points.Count];
@@ -48,6 +65,8 @@ namespace GraphicsModeler.Scene
                 
                 var worldPoint = Vector3.Transform(new Vector3(point.X, point.Y, point.Z),
                     worldMatrix);
+                
+                
                 var transformedPoint = Vector4.Transform(point, transformedMatrix);
                 
                 // Implement Sutherland-Hodgman clipping //
@@ -73,10 +92,9 @@ namespace GraphicsModeler.Scene
             return new Model(transformedMesh)
             {
                 WorldVertices = worldPoints.ToList(),
-                Normals = worldNormals.ToList(),
+                Normals = worldNormals,
                 Position = model.Position
             };
-            //return transformedPoints.ToList();
         }
         
         private static Matrix4x4 GetViewportMatrix(float width, float height,
@@ -109,21 +127,12 @@ namespace GraphicsModeler.Scene
             Vector3 rotation, 
             Vector3 translation)
         {
-            var initMatrix = Matrix4x4.CreateWorld(
-              translation,
-                             new Vector3(0, 0, -1),
-                new Vector3(0, -1, 0));
             var scaleMatrix = Matrix4x4.CreateScale(scaleFactor);
-            var rotateMatrix = Matrix4x4.CreateRotationX(rotation.X)
-                               * Matrix4x4.CreateRotationY(rotation.Y) 
-                               * Matrix4x4.CreateRotationZ(rotation.Z);
-            return scaleMatrix * rotateMatrix * initMatrix;
-            /*var scaleMatrix = Matrix4x4.CreateScale(scaleFactor);
-            var rotateMatrix = Matrix4x4.CreateRotationX(rotation.X)
-                               * Matrix4x4.CreateRotationY(rotation.Y) 
-                               * Matrix4x4.CreateRotationZ(rotation.Z);
             var translateMatrix = Matrix4x4.CreateTranslation(translation);
-            return scaleMatrix * rotateMatrix * translateMatrix;*/
+            var rotateMatrix = Matrix4x4.CreateRotationX(rotation.X)
+                               * Matrix4x4.CreateRotationY(rotation.Y) 
+                               * Matrix4x4.CreateRotationZ(rotation.Z);
+            return scaleMatrix * rotateMatrix * translateMatrix;
         }
     }
 }

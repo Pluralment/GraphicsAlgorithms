@@ -22,17 +22,19 @@ namespace GraphicsModeler.Scene
 
         public void Draw(ExtendedBitmap bitmap, Model model, Camera camera)
         {
+            InitNewFrame(bitmap, model);
+            Rasterize(_model.Mesh.Polygons, _model.Mesh.Vertices);
+        }
+
+        private void InitNewFrame(ExtendedBitmap bitmap, Model model)
+        {
             bmp = bitmap;
             _model = model;
             renderWidth = bmp.Width;
             renderHeight = bmp.Height;
-            //lightPos = new Vector3(model.Position.X + 10, model.Position.Y + 10, model.Position.Z + model.Position.Z/2);
-            lightPos = new Vector3(renderWidth, renderHeight, renderWidth);
+            lightPos = new Vector3(2, 2, 2);
             depthBuffer = new float[renderWidth * renderHeight];
             ClearDepthBuffer();
-
-            Rasterize(_model.Mesh.Polygons, _model.Mesh.Vertices);
-            //DrawMesh(model.Mesh.Polygons, model.Mesh.Vertices);
         }
 
         private void DrawMesh(List<Polygon> polygons, List<Vector4> vertices)
@@ -83,7 +85,7 @@ namespace GraphicsModeler.Scene
         private void ClearDepthBuffer()
         {
             for (var i = 0; i < depthBuffer.Length; i++)
-                depthBuffer[i] = float.MinValue;
+                depthBuffer[i] = float.MaxValue;
         }
 
         public void DrawPoint(Vector3 point, Color color, float intensity)
@@ -102,7 +104,7 @@ namespace GraphicsModeler.Scene
         {
             var index = (x + y * renderWidth);
 
-            if (depthBuffer[index] > z)
+            if (depthBuffer[index] < z)
             {
                 return;
             }
