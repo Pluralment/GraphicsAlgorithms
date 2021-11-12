@@ -35,7 +35,7 @@ namespace GraphicsModeler.MainWindow
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
-            model = parser.CreateModel(@"Model.obj");
+            model = parser.CreateModel(@"Cube.obj");
             model.Scale = 1f;
             model.Rotation = Vector3.Zero;
 
