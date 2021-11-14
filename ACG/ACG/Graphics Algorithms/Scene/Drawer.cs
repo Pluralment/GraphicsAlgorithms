@@ -15,16 +15,18 @@ namespace GraphicsModeler.Scene
         private ExtendedBitmap bmp;
         private int renderWidth;
         private int renderHeight;
-        private Vector3 pointLightPos;
         private Model _model;
         private Camera _camera;
+        
+        private Vector3 _pointLightPos;
+        private Color _ambientColor;
 
         public Drawer() {}
 
         public void Draw(ExtendedBitmap bitmap, Model model, Camera camera)
         {
             InitNewFrame(bitmap, model, camera);
-            Rasterize();
+            Render();
         }
 
         private void InitNewFrame(ExtendedBitmap bitmap, Model model, Camera camera)
@@ -32,9 +34,13 @@ namespace GraphicsModeler.Scene
             bmp = bitmap;
             _model = model;
             _camera = camera;
+            
             renderWidth = bmp.Width;
             renderHeight = bmp.Height;
-            pointLightPos = new Vector3(2, 2, 2);
+            
+            _pointLightPos = new Vector3(0, -2, 0);
+            _ambientColor = Color.DarkOliveGreen;
+
             depthBuffer = new float[renderWidth * renderHeight];
             ClearDepthBuffer();
         }
@@ -55,7 +61,7 @@ namespace GraphicsModeler.Scene
             bmp.UnlockBits();
         }
         
-        private void Rasterize()
+        private void Render()
         {
             var polygons = _model.Mesh.Polygons;
             var vertices = _model.Mesh.Vertices;
@@ -63,7 +69,7 @@ namespace GraphicsModeler.Scene
             bmp.LockBits();
             Parallel.ForEach(polygons, p =>
             {
-                //if (BackfaceCulling(p)) return;
+                if (IsCulled(p)) return;
                 ProcessTriangle(p, vertices);
             });
             bmp.UnlockBits();
@@ -107,14 +113,20 @@ namespace GraphicsModeler.Scene
                 depthBuffer[i] = float.MaxValue;
         }
 
-        private void DrawPoint(Vector3 point, Color color, float intensity)
+        private void DrawPoint(Vector3 point, Color color, PixelColorData pixelData)
         {
             // Clipping what's visible on screen
             if (point.X >= 0 && point.Y >= 0 && point.X < renderWidth && point.Y < renderHeight)
             {
-                int red = (int)(color.R * intensity);
-                int green = (int)(color.G * intensity);
-                int blue = (int)(color.B * intensity);
+                int red = (int)(_ambientColor.R * pixelData.AmbientCoef
+                                + pixelData.DiffuseColor.R * pixelData.DiffuseCoef * pixelData.DiffuseIntensity
+                                + pixelData.SpecularColor.R * pixelData.SpecularCoef);
+                int green = (int)(_ambientColor.G * pixelData.AmbientCoef
+                                  + pixelData.DiffuseColor.G * pixelData.DiffuseCoef * pixelData.DiffuseIntensity
+                                  + pixelData.SpecularColor.G * pixelData.SpecularCoef);
+                int blue = (int)(_ambientColor.B * pixelData.AmbientCoef
+                                 + pixelData.DiffuseColor.B * pixelData.DiffuseCoef * pixelData.DiffuseIntensity
+                                 + pixelData.SpecularColor.B * pixelData.SpecularCoef);
                 PutPixel((int)point.X, (int)point.Y, point.Z, red, green, blue);
             }
         }
@@ -152,37 +164,78 @@ namespace GraphicsModeler.Scene
             Vector3 pb = vb.Coordinates;
             Vector3 pc = vc.Coordinates;
             Vector3 pd = vd.Coordinates;
+
+            Vector3 wa = va.WorldCoordinates;
+            Vector3 wb = vb.WorldCoordinates;
+            Vector3 wc = vc.WorldCoordinates;
+            Vector3 wd = vd.WorldCoordinates;
             
             // Thanks to current Y, we can compute the gradient to compute others values like
             // the starting X (sx) and ending X (ex) to draw between
             // if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
             var leftGradient = pa.Y != pb.Y ? (data.CurrentY - pa.Y) / (pb.Y - pa.Y) : 1;
             var rightGradient = pc.Y != pd.Y ? (data.CurrentY - pc.Y) / (pd.Y - pc.Y) : 1;
-
+            
+            var leftWc = Vector3.Lerp(wa, wb, leftGradient);
+            var rightWc = Vector3.Lerp(wc, wd, rightGradient);
+            
+            var leftNormal = Vector3.Lerp(va.Normal, vb.Normal, leftGradient);
+            var rightNormal = Vector3.Lerp(vc.Normal, vd.Normal, rightGradient);
+            
             var leftX = (int)Interpolate(pa.X, pb.X, leftGradient);
             var rightX = (int)Interpolate(pc.X, pd.X, rightGradient);
 
             var z1 = Interpolate(pa.Z, pb.Z, leftGradient);
             var z2 = Interpolate(pc.Z, pd.Z, rightGradient);
-            
+
             for (var x = leftX; x < rightX; x++)
             {
                 var gradientZ = (x - leftX) / (float)(rightX - leftX);
-
+                
                 var z = Interpolate(z1, z2, gradientZ);
+                
+                var wVertex = Vector3.Lerp(leftWc, rightWc, gradientZ);
+                var wVertexNormal = Vector3.Lerp(leftNormal, rightNormal, gradientZ);
 
                 // changing the color value using the cosine of the angle
                 // between the light vector and the normal vector
-                var intensity = data.NDotla;
-                DrawPoint(new Vector3(x, data.CurrentY, z), color, intensity);
+                var diffuseIntensity = ComputeLightIntensity(wVertex, wVertexNormal, _pointLightPos);
+
+                var specularIntensity = ComputeSpecularIntensity(wVertex, wVertexNormal, 
+                    _pointLightPos, _camera.Position, 32);
+
+                var specularCoef = 0.5f;
+                specularCoef = specularIntensity * specularCoef;
+
+                var pixelData = new PixelColorData
+                {
+                    AmbientCoef = 0.6f,
+                    DiffuseCoef = 0.5f,
+                    DiffuseIntensity = diffuseIntensity,
+                    DiffuseColor = Color.DarkOliveGreen,
+                    SpecularCoef = specularCoef,
+                    SpecularColor = Color.White
+                };
+
+                DrawPoint(new Vector3(x, data.CurrentY, z), color, pixelData);
             }
+        }
+
+        private float ComputeSpecularIntensity(Vector3 fragPosition, Vector3 fragNormal, Vector3 lightPosition, 
+            Vector3 viewPosition, byte power)
+        {
+            var viewDirection = Vector3.Normalize(viewPosition - fragPosition);
+            var lightDirection = Vector3.Normalize(lightPosition - fragPosition);
+            var reflectDirection = Vector3.Reflect(-lightDirection, fragNormal);
+            
+            return (float)Math.Pow(Math.Max(0, Vector3.Dot(viewDirection, reflectDirection)), power);
         }
         
         // Compute the cosine of the angle between the light vector and the normal vector
         // Returns a value between 0 and 1
-        float ComputeNDotL(Vector3 vertex, Vector3 normal, Vector3 lightPosition) 
+        private float ComputeLightIntensity(Vector3 fragPosition, Vector3 normal, Vector3 lightPosition) 
         {
-            var lightDirection = lightPosition - vertex;
+            var lightDirection = lightPosition - fragPosition;
 
             normal = Vector3.Normalize(normal);
             lightDirection = Vector3.Normalize(lightDirection);
@@ -207,7 +260,7 @@ namespace GraphicsModeler.Scene
             return result;
         }
 
-        private bool BackfaceCulling(Polygon polygon)
+        private bool IsCulled(Polygon polygon)
         {
             var n1 = _model.Normals[polygon.NormalsIndexes[0]];
             var n2 = _model.Normals[polygon.NormalsIndexes[1]];
@@ -223,10 +276,6 @@ namespace GraphicsModeler.Scene
         
         public void DrawTriangle(Polygon polygon, Vertex v1, Vertex v2, Vertex v3, Color color)
         {
-            var wp1 = v1.WorldCoordinates;
-            var wp2 = v2.WorldCoordinates;
-            var wp3 = v3.WorldCoordinates;
-
             // Sorting the points in order to always have this order on screen p1, p2 & p3
             // with p1 always up (thus having the Y the lowest possible to be near the top screen)
             // then p2 between p1 & p3
@@ -419,6 +468,16 @@ namespace GraphicsModeler.Scene
             public float NDotlb;
             public float NDotlc;
             public float NDotld;
+        }
+        
+        private struct PixelColorData
+        {
+            public float AmbientCoef;
+            public float DiffuseCoef;
+            public float DiffuseIntensity;
+            public Color DiffuseColor;
+            public float SpecularCoef;
+            public Color SpecularColor;
         }
     }
 }

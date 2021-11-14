@@ -35,7 +35,7 @@ namespace GraphicsModeler.Scene
             var normalMatrix = GetNormalMatrix(rotation);
             Parallel.For(0, normals.Count, i =>
             {
-                var normal = Vector3.Transform(normals[i], normalMatrix);
+                var normal = Vector3.TransformNormal(normals[i], normalMatrix);
                 worldNormals[i] = normal;
             });
             return worldNormals.ToList();

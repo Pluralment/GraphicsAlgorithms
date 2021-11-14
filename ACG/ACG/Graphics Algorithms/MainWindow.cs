@@ -35,7 +35,7 @@ namespace GraphicsModeler.MainWindow
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
-            model = parser.CreateModel(@"Cube.obj");
+            model = parser.CreateModel(@"Model.obj");
             model.Scale = 1f;
             model.Rotation = Vector3.Zero;
 
@@ -62,52 +62,52 @@ namespace GraphicsModeler.MainWindow
         {
             if (e.KeyCode == Keys.Down)
             {
-                modelPosition.Y += 0.1f;
+                modelPosition.Y += 0.05f;
                 model.Position = modelPosition;
             }
             else if (e.KeyCode == Keys.Up)
             {
-                modelPosition.Y -= 0.1f;
+                modelPosition.Y -= 0.05f;
                 model.Position = modelPosition;
             }
             else if (e.KeyCode == Keys.D)
             {
-                modelRotation.Y -= 0.2f;
+                modelRotation.Y -= 0.05f;
                 model.Rotation = modelRotation;
             }
             else if (e.KeyCode == Keys.A)
             {
-                modelRotation.Y += 0.2f;
+                modelRotation.Y += 0.05f;
                 model.Rotation = modelRotation;
             }
             else if (e.KeyCode == Keys.Right)
             {
-                modelPosition.X -= 0.1f;
+                modelPosition.X -= 0.05f;
                 model.Position = modelPosition;
             }
             else if (e.KeyCode == Keys.Left)
             {
-                modelPosition.X += 0.1f;
+                modelPosition.X += 0.05f;
                 model.Position = modelPosition;
             }
             else if (e.KeyCode == Keys.W)
             {
-                modelPosition.Z += 0.1f;
+                modelPosition.Z += 0.05f;
                 model.Position = modelPosition;
             }
             else if (e.KeyCode == Keys.S)
             {
-                modelPosition.Z -= 0.1f;
+                modelPosition.Z -= 0.05f;
                 model.Position = modelPosition;
             }
             else if (e.KeyCode == Keys.B)
             {
-                modelRotation.X -= 0.1f;
+                modelRotation.X -= 0.05f;
                 model.Rotation = modelRotation;
             }
             else if (e.KeyCode == Keys.N)
             {
-                modelRotation.X += 0.1f;
+                modelRotation.X += 0.05f;
                 model.Rotation = modelRotation;
             }
 
