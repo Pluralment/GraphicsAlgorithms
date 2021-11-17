@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Numerics;
+using System.Text.RegularExpressions;
 using GraphicsModeler.Helper;
 using GraphicsModeler.Parser;
 using GraphicsModeler.Scene;
@@ -10,9 +12,10 @@ namespace GraphicsModeler.Extensions
 {
     public static class ObjectFileParserExtension
     {
-        public static Model CreateModel(this ObjectFileParser parser, string fileName)
+        public static Model CreateModel(this ObjectFileParser parser, string folderName, string fileName)
         {
             var obj = new Obj();
+            fileName = folderName + "\\" + fileName;
             obj.LoadObj(fileName);
 
             // List<Vertex> -> List<Vector4>.
@@ -39,28 +42,28 @@ namespace GraphicsModeler.Extensions
             // List<Face> -> List<Polygon>
             foreach (var face in obj.FaceList)
             {
-                /*var verticesList = new List<int>();
-                for (var i = 0; i < face.VertexIndexList.Length; i++)
-                {
-                    verticesList.Add(face.VertexIndexList[i] - 1);
-                }
-                parser.Polygons.Add(verticesList);*/
                 var verticesList = new List<int>();
                 for (var i = 0; i < face.VertexIndexList.Length; i++)
                 {
-                    verticesList.Add(face.VertexIndexList[i] - 1);
+                    var vertexIndex = face.VertexIndexList[i] - 1;
+                    if (vertexIndex < 0) vertexIndex = face.VertexIndexList.Length - vertexIndex;
+                    verticesList.Add(vertexIndex);
                 }
                 
                 var normalsList = new List<int>();
                 for (var i = 0; i < face.NormalVertexIndexList.Length; i++)
                 {
-                    normalsList.Add(face.NormalVertexIndexList[i] - 1);
+                    var normalIndex = face.NormalVertexIndexList[i] - 1;
+                    if (normalIndex < 0) normalIndex = face.NormalVertexIndexList.Length - normalIndex;
+                    normalsList.Add(normalIndex);
                 }
                 
                 var texturesList = new List<int>();
                 for (var i = 0; i < face.TextureVertexIndexList.Length; i++)
                 {
-                    texturesList.Add(face.TextureVertexIndexList[i] - 1);
+                    var textureIndex = face.TextureVertexIndexList[i] - 1;
+                    if (textureIndex < 0) textureIndex = face.TextureVertexIndexList.Length - textureIndex;
+                    texturesList.Add(textureIndex);
                 }
                 
                 Polygon polygon = new Polygon()
@@ -72,16 +75,49 @@ namespace GraphicsModeler.Extensions
                 parser.Polygons.Add(polygon);
             }
 
-            return new Model(
-                new Mesh
+
+
+
+            var mtl = new Mtl();
+            List<MaterialData> materials = new List<MaterialData>();
+            if (obj.Mtl != null)
+            {
+                mtl.LoadMtl(folderName, obj.Mtl);
+
+                foreach (var mtlMaterial in mtl.MaterialList)
                 {
-                    Vertices = parser.Vectors,
-                    Polygons = parser.Polygons
-                })
+                    var material = new MaterialData
+                    {
+                        Name = mtlMaterial.Name,
+                        AmbientReflectivity = mtlMaterial.AmbientReflectivity.ToRgba(),
+                        DiffuseReflectivity = mtlMaterial.DiffuseReflectivity.ToRgba(),
+                        SpecularReflectivity = mtlMaterial.SpecularReflectivity.ToRgba(),
+                        TransmissionFilter = mtlMaterial.TransmissionFilter.ToRgba(),
+                        EmissiveCoefficient = mtlMaterial.EmissiveCoefficient.ToRgba(),
+                        SpecularExponent = mtlMaterial.SpecularExponent,
+                        OpticalDensity = mtlMaterial.OpticalDensity,
+                        Dissolve = mtlMaterial.Dissolve
+                    };
+
+                    material.DiffuseMap.Load(folderName + "\\" + mtlMaterial.KdFileName);
+                    material.SpecularMap.Load(folderName + "\\" + mtlMaterial.KsFileName);
+
+                    materials.Add(material);
+                }
+
+            }
+
+            return new Model(new Mesh { Vertices = parser.Vectors,Polygons = parser.Polygons })
             {
                 Textures = parser.Textures,
-                Normals = parser.Normals
+                Normals = parser.Normals,
+                Materials = materials
             };
+        }
+
+        private static byte GetByteColor(float value)
+        {
+            return (byte) (value * 255);
         }
     }
 }

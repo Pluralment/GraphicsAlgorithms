@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using ObjParser.Types;
@@ -8,6 +9,7 @@ namespace ObjParser
 {
     public class Mtl
     {
+        private string dir;
         public List<Material> MaterialList;
 
         /// <summary>
@@ -22,9 +24,10 @@ namespace ObjParser
         /// Load .obj from a filepath.
         /// </summary>
         /// <param name="file"></param>
-        public void LoadMtl(string path)
+        public void LoadMtl(string directory, string fileName)
         {
-            LoadMtl(File.ReadAllLines(path));
+            dir = directory;
+            LoadMtl(File.ReadAllLines(GetPath(fileName)));
         }
 
         /// <summary>
@@ -63,6 +66,11 @@ namespace ObjParser
             }
         }
 
+        private string GetPath(string fileName)
+        {
+            return Path.Combine(dir, fileName);
+        }
+
         private void WriteHeader(StreamWriter writer, string[] headerStrings)
         {
             if (headerStrings == null || headerStrings.Length == 0)
@@ -94,7 +102,7 @@ namespace ObjParser
             if (parts.Length > 0)
             {
                 Material CurrentMaterial = currentMaterial();
-                Color c = new Color();
+                MaterialColor c = new MaterialColor();
                 switch (parts[0])
                 {
                     case "newmtl":
@@ -123,16 +131,25 @@ namespace ObjParser
                         CurrentMaterial.TransmissionFilter = c;
                         break;
                     case "Ni":
-                        CurrentMaterial.OpticalDensity = float.Parse(parts[1]);
+                        CurrentMaterial.OpticalDensity = float.Parse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture);
                         break;
                     case "d":
-                        CurrentMaterial.Dissolve = float.Parse(parts[1]);
+                        CurrentMaterial.Dissolve = float.Parse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture);
                         break;
                     case "illum":
-                        CurrentMaterial.IlluminationModel = int.Parse(parts[1]);
+                        CurrentMaterial.IlluminationModel = int.Parse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture);
                         break;
                     case "Ns":
-                        CurrentMaterial.SpecularExponent = float.Parse(parts[1]);
+                        CurrentMaterial.SpecularExponent = float.Parse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture);
+                        break;
+                    case "map_Bump":
+                        CurrentMaterial.BumpFileName = parts[1];
+                        break;
+                    case "map_Kd":
+                        CurrentMaterial.KdFileName = parts[1];
+                        break;
+                    case "map_Ks":
+                        CurrentMaterial.KsFileName = parts[1];
                         break;
                 }
             }

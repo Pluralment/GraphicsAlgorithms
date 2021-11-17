@@ -48,50 +48,5 @@ namespace GraphicsModeler.Parser
         {
             
         }
-
-        
-        /*
-        public ObjectFileParser(string fileName)
-        {
-            if (fileName is null)
-                throw new ArgumentNullException(nameof(fileName));
-
-            _content = File.ReadAllText(fileName);
-            _lines = _content.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
-                .Where(x => x.Trim() != string.Empty)
-                .Select(x => x.Trim()).ToArray();
-            _vectors = _lines.Where(x => x.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[0].Equals("v", StringComparison.OrdinalIgnoreCase))
-                                .Select(x => new Vector4(float.Parse(x.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[1]),
-                                                          float.Parse(x.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[2]),
-                                                          float.Parse(x.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[3]),
-                                                          1))
-                                .ToList();
-        }
-        
-
-
-        public Model GetModel()
-        {
-            var faces = _lines.Where(x => x.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[0].Equals("f", StringComparison.OrdinalIgnoreCase)).ToArray();
-            foreach (string face in faces)
-            {
-                var polygonVertexes = face.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Skip(1).ToArray();
-                var polygonList = new List<int>();
-                for (int i = 0; i < polygonVertexes.Length; i++)
-                {
-                    polygonList.Add(int.Parse(polygonVertexes[i].Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0]) - 1);
-                }
-                
-                _polygons.Add(polygonList);
-            }
-
-            return new Model(
-                new Mesh
-                {
-                    Vertices = _vectors,
-                    Polygons = _polygons
-                });
-        }*/
     }
 }

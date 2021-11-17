@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 
 namespace ObjParser.Types
 {
-    public class Color : IType
+    public class MaterialColor : IType
     {
         public float r { get; set; }
         public float g { get; set; }
         public float b { get; set; }
 
-        public Color()
+        public MaterialColor()
         {
             this.r = 1f;
             this.g = 1f;
@@ -24,9 +24,9 @@ namespace ObjParser.Types
         public void LoadFromStringArray(string[] data)
         {
             if (data.Length != 4) return;
-            r = float.Parse(data[1]);
-            g = float.Parse(data[2]);
-            b = float.Parse(data[3]);
+            r = float.Parse(data[1], NumberStyles.Any, CultureInfo.InvariantCulture);
+            g = float.Parse(data[2], NumberStyles.Any, CultureInfo.InvariantCulture);
+            b = float.Parse(data[3], NumberStyles.Any, CultureInfo.InvariantCulture);
         }
 
         public override string ToString()

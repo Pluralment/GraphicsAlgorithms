@@ -17,6 +17,8 @@ namespace GraphicsModeler.Scene
         private int renderHeight;
         private Model _model;
         private Camera _camera;
+
+        private MaterialData _materialData;
         
         private Vector3 _pointLightPos;
         private Color _ambientColor;
@@ -34,11 +36,12 @@ namespace GraphicsModeler.Scene
             bmp = bitmap;
             _model = model;
             _camera = camera;
-            
+            _materialData = model.Materials.Single();
+
             renderWidth = bmp.Width;
             renderHeight = bmp.Height;
             
-            _pointLightPos = new Vector3(0, -2, 0);
+            _pointLightPos = new Vector3(0, 2, 2);
             _ambientColor = Color.DarkOliveGreen;
 
             depthBuffer = new float[renderWidth * renderHeight];
@@ -121,9 +124,11 @@ namespace GraphicsModeler.Scene
                 int red = (int)(_ambientColor.R * pixelData.AmbientCoef
                                 + pixelData.DiffuseColor.R * pixelData.DiffuseCoef * pixelData.DiffuseIntensity
                                 + pixelData.SpecularColor.R * pixelData.SpecularCoef);
+
                 int green = (int)(_ambientColor.G * pixelData.AmbientCoef
                                   + pixelData.DiffuseColor.G * pixelData.DiffuseCoef * pixelData.DiffuseIntensity
                                   + pixelData.SpecularColor.G * pixelData.SpecularCoef);
+                
                 int blue = (int)(_ambientColor.B * pixelData.AmbientCoef
                                  + pixelData.DiffuseColor.B * pixelData.DiffuseCoef * pixelData.DiffuseIntensity
                                  + pixelData.SpecularColor.B * pixelData.SpecularCoef);
@@ -141,7 +146,7 @@ namespace GraphicsModeler.Scene
             }
 
             depthBuffer[index] = z;
-            bmp[x, y] = Color.FromArgb(255, red, green, blue);
+            bmp[x, y] = Color.FromArgb(255, (byte)red, (byte)green, (byte)blue);
         }
         
         // Clamping values to keep them between 0 and 1
