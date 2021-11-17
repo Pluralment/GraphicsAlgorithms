@@ -7,7 +7,7 @@ namespace GraphicsModeler.Extensions
     {
         public static RgbaColor ToRgba(this MaterialColor materialColor)
         {
-            return new RgbaColor{ R = materialColor.r, G = materialColor.g, B = materialColor.b };
+            return new RgbaColor{ R = materialColor.r, G = materialColor.g, B = materialColor.b, A = 255 };
         }
     }
 }

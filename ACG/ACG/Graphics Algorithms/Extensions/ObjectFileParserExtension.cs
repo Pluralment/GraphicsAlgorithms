@@ -114,10 +114,5 @@ namespace GraphicsModeler.Extensions
                 Materials = materials
             };
         }
-
-        private static byte GetByteColor(float value)
-        {
-            return (byte) (value * 255);
-        }
     }
 }

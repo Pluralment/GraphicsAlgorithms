@@ -48,6 +48,21 @@ namespace GraphicsModeler.Scene
             public float G;
             public float B;
             public float A;
+
+            public static RgbaColor operator *(RgbaColor c1, RgbaColor c2)
+            {
+                return new RgbaColor { R = c1.R * c2.R, G = c1.G * c2.G, B = c1.B * c2.B, A = c1.A * c2.A };
+            }
+
+            public static RgbaColor operator *(RgbaColor c1, float grad)
+            {
+                return new RgbaColor { R = c1.R * grad, G = c1.G * grad, B = c1.B * grad, A = c1.A };
+            }
+
+            public static RgbaColor operator +(RgbaColor c1, RgbaColor c2)
+            {
+                return new RgbaColor { R = c1.R + c2.R, G = c1.G + c2.G, B = c1.B + c2.B, A = 1.0f };
+            }
         }
     }
 }

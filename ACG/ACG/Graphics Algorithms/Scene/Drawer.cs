@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Drawing;
 using System.Linq;
 using GraphicsModeler.Helper;
+using static GraphicsModeler.Scene.MaterialData;
 
 namespace GraphicsModeler.Scene
 {
@@ -21,7 +22,6 @@ namespace GraphicsModeler.Scene
         private MaterialData _materialData;
         
         private Vector3 _pointLightPos;
-        private Color _ambientColor;
 
         public Drawer() {}
 
@@ -42,7 +42,6 @@ namespace GraphicsModeler.Scene
             renderHeight = bmp.Height;
             
             _pointLightPos = new Vector3(0, 2, 2);
-            _ambientColor = Color.DarkOliveGreen;
 
             depthBuffer = new float[renderWidth * renderHeight];
             ClearDepthBuffer();
@@ -94,9 +93,13 @@ namespace GraphicsModeler.Scene
                 var wp2 = _model.WorldVertices[p.VerticesIndexes[1]];
                 var wp3 = _model.WorldVertices[p.VerticesIndexes[2]];
 
-                var vertex1 = new Vertex { Coordinates = p1, Normal = n1, WorldCoordinates = wp1 };
-                var vertex2 = new Vertex { Coordinates = p2, Normal = n2, WorldCoordinates = wp2 };
-                var vertex3 = new Vertex { Coordinates = p3, Normal = n3, WorldCoordinates = wp3 };
+                var uv1 = _model.Textures[p.TexturesIndexes[0]];
+                var uv2 = _model.Textures[p.TexturesIndexes[1]];
+                var uv3 = _model.Textures[p.TexturesIndexes[2]];
+
+                var vertex1 = new Vertex { Coordinates = p1, Normal = n1, WorldCoordinates = wp1, U = uv1.X, V = uv1.Y };
+                var vertex2 = new Vertex { Coordinates = p2, Normal = n2, WorldCoordinates = wp2, U = uv2.X, V = uv2.Y };
+                var vertex3 = new Vertex { Coordinates = p3, Normal = n3, WorldCoordinates = wp3, U = uv3.X, V = uv3.Y };
                 
                 DrawTriangle(p, vertex1, vertex2, vertex3, Color.DarkOliveGreen);   
             }
@@ -121,17 +124,27 @@ namespace GraphicsModeler.Scene
             // Clipping what's visible on screen
             if (point.X >= 0 && point.Y >= 0 && point.X < renderWidth && point.Y < renderHeight)
             {
-                int red = (int)(_ambientColor.R * pixelData.AmbientCoef
+                var newColor = pixelData.AmbientColor * pixelData.AmbientCoef
+                    + pixelData.DiffuseColor * pixelData.DiffuseCoef * pixelData.DiffuseIntensity
+                    + pixelData.SpecularColor * pixelData.SpecularCoef;
+
+                int red = GetByteColor(newColor.R);
+                int green = GetByteColor(newColor.G);
+                int blue = GetByteColor(newColor.B);
+
+/*                int red = (int)(pixelData.AmbientColor.R * pixelData.AmbientCoef
                                 + pixelData.DiffuseColor.R * pixelData.DiffuseCoef * pixelData.DiffuseIntensity
                                 + pixelData.SpecularColor.R * pixelData.SpecularCoef);
 
-                int green = (int)(_ambientColor.G * pixelData.AmbientCoef
+                int green = (int)(pixelData.AmbientColor.G * pixelData.AmbientCoef
                                   + pixelData.DiffuseColor.G * pixelData.DiffuseCoef * pixelData.DiffuseIntensity
                                   + pixelData.SpecularColor.G * pixelData.SpecularCoef);
-                
-                int blue = (int)(_ambientColor.B * pixelData.AmbientCoef
+
+                int blue = (int)(pixelData.AmbientColor.B * pixelData.AmbientCoef
                                  + pixelData.DiffuseColor.B * pixelData.DiffuseCoef * pixelData.DiffuseIntensity
-                                 + pixelData.SpecularColor.B * pixelData.SpecularCoef);
+                                 + pixelData.SpecularColor.B * pixelData.SpecularCoef);*/
+
+
                 PutPixel((int)point.X, (int)point.Y, point.Z, red, green, blue);
             }
         }
@@ -190,14 +203,17 @@ namespace GraphicsModeler.Scene
             var leftX = (int)Interpolate(pa.X, pb.X, leftGradient);
             var rightX = (int)Interpolate(pc.X, pd.X, rightGradient);
 
-            var z1 = Interpolate(pa.Z, pb.Z, leftGradient);
-            var z2 = Interpolate(pc.Z, pd.Z, rightGradient);
+            var leftZ = Interpolate(pa.Z, pb.Z, leftGradient);
+            var rightZ = Interpolate(pc.Z, pd.Z, rightGradient);
+
+            // Interpolating texture coords.
+            //var leftU = ;
 
             for (var x = leftX; x < rightX; x++)
             {
                 var gradientZ = (x - leftX) / (float)(rightX - leftX);
                 
-                var z = Interpolate(z1, z2, gradientZ);
+                var z = Interpolate(leftZ, rightZ, gradientZ);
                 
                 var wVertex = Vector3.Lerp(leftWc, rightWc, gradientZ);
                 var wVertexNormal = Vector3.Lerp(leftNormal, rightNormal, gradientZ);
@@ -207,23 +223,38 @@ namespace GraphicsModeler.Scene
                 var diffuseIntensity = ComputeLightIntensity(wVertex, wVertexNormal, _pointLightPos);
 
                 var specularIntensity = ComputeSpecularIntensity(wVertex, wVertexNormal, 
-                    _pointLightPos, _camera.Position, 32);
+                    _pointLightPos, _camera.Position, (byte)_materialData.SpecularExponent);
 
-                var specularCoef = 0.5f;
-                specularCoef = specularIntensity * specularCoef;
+                // Replace by value from map_Ks.
+                var specularCoef = new RgbaColor { R = 0.5f, G = 0.5f, B = 0.5f, A = 1.0f };
+                specularCoef *= specularIntensity;
 
                 var pixelData = new PixelColorData
                 {
+                    /*                    
                     AmbientCoef = 0.6f,
                     DiffuseCoef = 0.5f,
                     DiffuseIntensity = diffuseIntensity,
                     DiffuseColor = Color.DarkOliveGreen,
                     SpecularCoef = specularCoef,
                     SpecularColor = Color.White
+                    */
+                    AmbientColor = _materialData.AmbientReflectivity,                  
+                    AmbientCoef = new RgbaColor { R = 0.6f, G = 0.6f, B = 0.6f, A = 1.0f }, 
+                    DiffuseCoef = new RgbaColor { R = 0.5f, G = 0.5f, B = 0.5f, A = 1.0f }, 
+                    DiffuseIntensity = diffuseIntensity,
+                    DiffuseColor = _materialData.DiffuseReflectivity,
+                    SpecularCoef = specularCoef,
+                    SpecularColor = _materialData.SpecularReflectivity
                 };
 
                 DrawPoint(new Vector3(x, data.CurrentY, z), color, pixelData);
             }
+        }
+
+        private static byte GetByteColor(float value)
+        {
+            return (byte)(value * 255);
         }
 
         private float ComputeSpecularIntensity(Vector3 fragPosition, Vector3 fragNormal, Vector3 lightPosition, 
@@ -299,12 +330,12 @@ namespace GraphicsModeler.Scene
 
             // http://en.wikipedia.org/wiki/Slope
             // Computing inverse slopes
-            if (p2.Y - p1.Y > 0)
+            if (p2.Y - p1.Y > 0.0f)
                 dP1P2 = (p2.X - p1.X) / (p2.Y - p1.Y);
             else
                 dP1P2 = 0;
 
-            if (p3.Y - p1.Y > 0)
+            if (p3.Y - p1.Y > 0.0f)
                 dP1P3 = (p3.X - p1.X) / (p3.Y - p1.Y);
             else
                 dP1P3 = 0;
@@ -352,6 +383,7 @@ namespace GraphicsModeler.Scene
             //       P1
             else
             {
+                //if (p2.X >= p1.X || p2.X >= p3.X) throw new Exception("Incorrect vert X pos");
                 for (var y = (int)p1.Y; y <= (int)p3.Y; y++)
                 {
                     data.CurrentY = y;
@@ -477,6 +509,18 @@ namespace GraphicsModeler.Scene
         
         private struct PixelColorData
         {
+            public RgbaColor AmbientColor;
+            public RgbaColor AmbientCoef;
+            public RgbaColor DiffuseCoef;
+            public float DiffuseIntensity;
+            public RgbaColor DiffuseColor;
+            public RgbaColor SpecularCoef;
+            public RgbaColor SpecularColor;
+        }
+
+        /*
+        private struct PixelColorData
+        {
             public float AmbientCoef;
             public float DiffuseCoef;
             public float DiffuseIntensity;
@@ -484,5 +528,6 @@ namespace GraphicsModeler.Scene
             public float SpecularCoef;
             public Color SpecularColor;
         }
+        */
     }
 }

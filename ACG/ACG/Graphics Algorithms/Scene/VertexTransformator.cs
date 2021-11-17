@@ -97,7 +97,8 @@ namespace GraphicsModeler.Scene
                 WorldVertices = worldPoints.ToList(),
                 Normals = worldNormals,
                 Position = model.Position,
-                Materials = model.Materials
+                Materials = model.Materials,
+                Textures = model.Textures
             };
         }
         
