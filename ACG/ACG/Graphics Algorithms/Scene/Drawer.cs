@@ -36,12 +36,11 @@ namespace GraphicsModeler.Scene
             bmp = bitmap;
             _model = model;
             _camera = camera;
-            _materialData = model.Materials.Single();
 
             renderWidth = bmp.Width;
             renderHeight = bmp.Height;
             
-            _pointLightPos = new Vector3(0, 1, 3);
+            _pointLightPos = new Vector3(0, -1, 2);
 
             depthBuffer = new float[renderWidth * renderHeight];
             ClearDepthBuffer();
@@ -68,13 +67,17 @@ namespace GraphicsModeler.Scene
             var polygons = _model.Mesh.Polygons;
             var vertices = _model.Mesh.Vertices;
             
-            bmp.LockBits();
-            Parallel.ForEach(polygons, p =>
+            foreach(var material in _model.Materials)
             {
-                if (IsCulled(p)) return;
-                ProcessTriangle(p, vertices);
-            });
-            bmp.UnlockBits();
+                _materialData = material;
+                bmp.LockBits();
+                Parallel.ForEach(polygons, p =>
+                {
+                    if (IsCulled(p)) return;
+                    ProcessTriangle(p, vertices);
+                });
+                bmp.UnlockBits();
+            }
         }
 
         private void ProcessTriangle(Polygon p, List<Vector3> vertices)
@@ -124,13 +127,14 @@ namespace GraphicsModeler.Scene
             // Clipping what's visible on screen
             if (point.X >= 0 && point.Y >= 0 && point.X < renderWidth && point.Y < renderHeight)
             {
-                var newColor = pixelData.AmbientColor * pixelData.AmbientCoef
-                    + pixelData.DiffuseColor * pixelData.DiffuseCoef * pixelData.DiffuseIntensity
-                    + pixelData.SpecularColor * pixelData.SpecularCoef;
+                var ambient = pixelData.AmbientColor * pixelData.AmbientCoef;
+                var diffuse = pixelData.DiffuseColor * pixelData.DiffuseCoef * pixelData.DiffuseIntensity;
+                var specular = pixelData.SpecularColor * pixelData.SpecularCoef;
+                var newColor = ambient + diffuse + specular;
 
-                int red = GetByteColor(newColor.R);
-                int green = GetByteColor(newColor.G);
-                int blue = GetByteColor(newColor.B);
+                int red = GetIntColor(newColor.R);
+                int green = GetIntColor(newColor.G);
+                int blue = GetIntColor(newColor.B);
 
                 PutPixel((int)point.X, (int)point.Y, point.Z, red, green, blue);
             }
@@ -216,9 +220,9 @@ namespace GraphicsModeler.Scene
                 var z = Interpolate(leftZ, rightZ, gradientX);
 
                 var uv = InterpolateTexture(leftUv, rightUv, leftZ, rightZ, gradientX);
-                Color kd = _materialData.DiffuseMap.Map(uv.X, uv.Y);
-                Color ks = _materialData.SpecularMap.Map(uv.X, uv.Y);
-                
+                Color kd = (_materialData.DiffuseMap != null) ? _materialData.DiffuseMap.Map(uv.X, uv.Y) : Color.FromArgb(255, 153, 153, 153);
+                Color ks = (_materialData.SpecularMap != null) ? _materialData.SpecularMap.Map(uv.X, uv.Y) : Color.FromArgb(255, 127, 127, 127);
+
                 var wVertex = Vector3.Lerp(leftWc, rightWc, gradientX);
                 var wVertexNormal = Vector3.Lerp(leftNormal, rightNormal, gradientX);
 
@@ -235,15 +239,9 @@ namespace GraphicsModeler.Scene
 
                 var kdRgba = new RgbaColor { R = kd.R / 255.0f, G = kd.G / 255.0f, B = kd.B / 255.0f, A = 1.0f };
 
+                Color clr = Color.DarkOliveGreen;
                 var pixelData = new PixelColorData
-                {/*
-                    AmbientColor = _materialData.AmbientReflectivity,                  
-                    AmbientCoef = kdRgba, 
-                    DiffuseCoef = kdRgba, 
-                    DiffuseIntensity = diffuseIntensity,
-                    DiffuseColor = _materialData.DiffuseReflectivity,
-                    SpecularCoef = ksRgba,
-                    SpecularColor = _materialData.SpecularReflectivity*/
+                {
                     AmbientColor = _materialData.AmbientReflectivity,
                     AmbientCoef = kdRgba,
                     DiffuseCoef = kdRgba,
@@ -257,9 +255,9 @@ namespace GraphicsModeler.Scene
             }
         }
 
-        private static byte GetByteColor(float value)
+        private static int GetIntColor(float value)
         {
-            return (byte)(value * 255);
+            return (int)(value * 255);
         }
 
         private float ComputeSpecularIntensity(Vector3 fragPosition, Vector3 fragNormal, Vector3 lightPosition, 
@@ -522,17 +520,5 @@ namespace GraphicsModeler.Scene
             public RgbaColor SpecularCoef;
             public RgbaColor SpecularColor;
         }
-
-        /*
-        private struct PixelColorData
-        {
-            public float AmbientCoef;
-            public float DiffuseCoef;
-            public float DiffuseIntensity;
-            public Color DiffuseColor;
-            public float SpecularCoef;
-            public Color SpecularColor;
-        }
-        */
     }
 }

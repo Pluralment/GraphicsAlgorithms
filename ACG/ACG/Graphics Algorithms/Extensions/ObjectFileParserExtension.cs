@@ -99,13 +99,21 @@ namespace GraphicsModeler.Extensions
                         Dissolve = mtlMaterial.Dissolve
                     };
 
-                    material.DiffuseMap.Load(folderName + "\\" + mtlMaterial.KdFileName);
-                    material.SpecularMap.Load(folderName + "\\" + mtlMaterial.KsFileName);
+                    if (mtlMaterial.KdFileName != null)
+                    {
+                        material.DiffuseMap = new Texture();
+                        material.DiffuseMap.Load(folderName + "\\" + mtlMaterial.KdFileName);
+                    }
+                    if (mtlMaterial.KsFileName != null)
+                    {
+                        material.SpecularMap = new Texture();
+                        material.SpecularMap.Load(folderName + "\\" + mtlMaterial.KsFileName);
+                    }
 
                     materials.Add(material);
                 }
-
             }
+            if (materials.Count == 0) materials.Add(new MaterialData());
 
             return new Model(new Mesh { Vertices = parser.Vectors,Polygons = parser.Polygons })
             {

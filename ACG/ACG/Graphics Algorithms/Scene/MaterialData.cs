@@ -28,18 +28,18 @@ namespace GraphicsModeler.Scene
         public MaterialData()
         {
             Name = "DefaultMaterial";
-            AmbientReflectivity = new RgbaColor();
-            DiffuseReflectivity = new RgbaColor();
-            SpecularReflectivity = new RgbaColor();
+            AmbientReflectivity = new RgbaColor { R = 0.33f, G = 0.42f, B = 0.18f, A = 1.0f };
+            DiffuseReflectivity = new RgbaColor { R = 0.33f, G = 0.42f, B = 0.18f, A = 1.0f };
+            SpecularReflectivity = new RgbaColor { R = 1.0f, G = 1.0f, B = 1.0f, A = 1.0f };
             TransmissionFilter = new RgbaColor();
             EmissiveCoefficient = new RgbaColor();
-            SpecularExponent = 0;
+            SpecularExponent = 32;
             OpticalDensity = 1.0f;
             Dissolve = 1.0f;
             IlluminationModel = 0;
-            BumpMap = new Texture();
-            DiffuseMap = new Texture();
-            SpecularMap = new Texture();
+            //BumpMap = new Texture();
+            //DiffuseMap = new Texture();
+            //SpecularMap = new Texture();
         }
 
         public struct RgbaColor
