@@ -43,7 +43,8 @@ namespace GraphicsModeler.Scene
             int u = Math.Abs((int)(tu * width) % width);
             int v = Math.Abs((int)(tv * height) % height);
 
-            return ColorBuffer[v * width + u];
+            //return ColorBuffer[v * width + u];
+            return ColorBuffer[(width - 1 - v) * width + u];
         }
     }
 }

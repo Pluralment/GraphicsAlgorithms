@@ -17,7 +17,6 @@ namespace GraphicsModeler.Scene
         public Vector3 Normal;
         public Vector3 Coordinates;
         public Vector3 WorldCoordinates;
-        public float U;
-        public float V;
+        public Vector2 UV;
     }
 }

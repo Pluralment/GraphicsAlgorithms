@@ -36,6 +36,7 @@ namespace GraphicsModeler.MainWindow
         private void MainWindow_Load(object sender, EventArgs e)
         {
             model = parser.CreateModel("winchester", "rifle.obj");
+            //model = parser.CreateModel("mermaid", "mermaid.obj");
             model.Scale = 1f;
             model.Rotation = Vector3.Zero;
 

@@ -41,7 +41,7 @@ namespace GraphicsModeler.Scene
             renderWidth = bmp.Width;
             renderHeight = bmp.Height;
             
-            _pointLightPos = new Vector3(0, 2, 2);
+            _pointLightPos = new Vector3(0, 1, 3);
 
             depthBuffer = new float[renderWidth * renderHeight];
             ClearDepthBuffer();
@@ -97,9 +97,9 @@ namespace GraphicsModeler.Scene
                 var uv2 = _model.Textures[p.TexturesIndexes[1]];
                 var uv3 = _model.Textures[p.TexturesIndexes[2]];
 
-                var vertex1 = new Vertex { Coordinates = p1, Normal = n1, WorldCoordinates = wp1, U = uv1.X, V = uv1.Y };
-                var vertex2 = new Vertex { Coordinates = p2, Normal = n2, WorldCoordinates = wp2, U = uv2.X, V = uv2.Y };
-                var vertex3 = new Vertex { Coordinates = p3, Normal = n3, WorldCoordinates = wp3, U = uv3.X, V = uv3.Y };
+                var vertex1 = new Vertex { Coordinates = p1, Normal = n1, WorldCoordinates = wp1, UV = new Vector2(uv1.X, uv1.Y) };
+                var vertex2 = new Vertex { Coordinates = p2, Normal = n2, WorldCoordinates = wp2, UV = new Vector2(uv2.X, uv2.Y) };
+                var vertex3 = new Vertex { Coordinates = p3, Normal = n3, WorldCoordinates = wp3, UV = new Vector2(uv3.X, uv3.Y) };
                 
                 DrawTriangle(p, vertex1, vertex2, vertex3, Color.DarkOliveGreen);   
             }
@@ -132,19 +132,6 @@ namespace GraphicsModeler.Scene
                 int green = GetByteColor(newColor.G);
                 int blue = GetByteColor(newColor.B);
 
-/*                int red = (int)(pixelData.AmbientColor.R * pixelData.AmbientCoef
-                                + pixelData.DiffuseColor.R * pixelData.DiffuseCoef * pixelData.DiffuseIntensity
-                                + pixelData.SpecularColor.R * pixelData.SpecularCoef);
-
-                int green = (int)(pixelData.AmbientColor.G * pixelData.AmbientCoef
-                                  + pixelData.DiffuseColor.G * pixelData.DiffuseCoef * pixelData.DiffuseIntensity
-                                  + pixelData.SpecularColor.G * pixelData.SpecularCoef);
-
-                int blue = (int)(pixelData.AmbientColor.B * pixelData.AmbientCoef
-                                 + pixelData.DiffuseColor.B * pixelData.DiffuseCoef * pixelData.DiffuseIntensity
-                                 + pixelData.SpecularColor.B * pixelData.SpecularCoef);*/
-
-
                 PutPixel((int)point.X, (int)point.Y, point.Z, red, green, blue);
             }
         }
@@ -172,6 +159,17 @@ namespace GraphicsModeler.Scene
         {
             return start + (end - start) * Clamp(gradient);
         }
+
+        Vector2 InterpolateTexture(Vector2 startUv, Vector2 endUv, float startZ, float endZ, float gradient)
+        {
+            var uRec = Interpolate(startUv.X / startZ, endUv.X / endZ, gradient);
+            var vRec = Interpolate(startUv.Y / startZ, endUv.Y / endZ, gradient);
+
+            var u = uRec / Interpolate(1 / startZ, 1 / endZ, gradient);
+            var v = vRec / Interpolate(1 / startZ, 1 / endZ, gradient);
+
+            return new Vector2(u, v);
+        }
         
         // drawing line between 2 points from left to right
         // papb -> pcpd
@@ -191,60 +189,67 @@ namespace GraphicsModeler.Scene
             // Thanks to current Y, we can compute the gradient to compute others values like
             // the starting X (sx) and ending X (ex) to draw between
             // if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
-            var leftGradient = pa.Y != pb.Y ? (data.CurrentY - pa.Y) / (pb.Y - pa.Y) : 1;
-            var rightGradient = pc.Y != pd.Y ? (data.CurrentY - pc.Y) / (pd.Y - pc.Y) : 1;
+            var leftGradientY = pa.Y != pb.Y ? (data.CurrentY - pa.Y) / (pb.Y - pa.Y) : 1;
+            var rightGradientY = pc.Y != pd.Y ? (data.CurrentY - pc.Y) / (pd.Y - pc.Y) : 1;
             
-            var leftWc = Vector3.Lerp(wa, wb, leftGradient);
-            var rightWc = Vector3.Lerp(wc, wd, rightGradient);
+            var leftWc = Vector3.Lerp(wa, wb, leftGradientY);
+            var rightWc = Vector3.Lerp(wc, wd, rightGradientY);
             
-            var leftNormal = Vector3.Lerp(va.Normal, vb.Normal, leftGradient);
-            var rightNormal = Vector3.Lerp(vc.Normal, vd.Normal, rightGradient);
+            var leftNormal = Vector3.Lerp(va.Normal, vb.Normal, leftGradientY);
+            var rightNormal = Vector3.Lerp(vc.Normal, vd.Normal, rightGradientY);
             
-            var leftX = (int)Interpolate(pa.X, pb.X, leftGradient);
-            var rightX = (int)Interpolate(pc.X, pd.X, rightGradient);
+            var leftX = (int)Interpolate(pa.X, pb.X, leftGradientY);
+            var rightX = (int)Interpolate(pc.X, pd.X, rightGradientY);
 
-            var leftZ = Interpolate(pa.Z, pb.Z, leftGradient);
-            var rightZ = Interpolate(pc.Z, pd.Z, rightGradient);
+            var leftZ = Interpolate(pa.Z, pb.Z, leftGradientY);
+            var rightZ = Interpolate(pc.Z, pd.Z, rightGradientY);
 
             // Interpolating texture coords.
-            //var leftU = ;
+            var leftUv = InterpolateTexture(va.UV, vb.UV, pa.Z, pb.Z, leftGradientY);
+            var rightUv = InterpolateTexture(vc.UV, vd.UV, pc.Z, pd.Z, rightGradientY);
+            //
 
             for (var x = leftX; x < rightX; x++)
             {
-                var gradientZ = (x - leftX) / (float)(rightX - leftX);
+                var gradientX = (x - leftX) / (float)(rightX - leftX);
                 
-                var z = Interpolate(leftZ, rightZ, gradientZ);
+                var z = Interpolate(leftZ, rightZ, gradientX);
+
+                var uv = InterpolateTexture(leftUv, rightUv, leftZ, rightZ, gradientX);
+                Color kd = _materialData.DiffuseMap.Map(uv.X, uv.Y);
+                Color ks = _materialData.SpecularMap.Map(uv.X, uv.Y);
                 
-                var wVertex = Vector3.Lerp(leftWc, rightWc, gradientZ);
-                var wVertexNormal = Vector3.Lerp(leftNormal, rightNormal, gradientZ);
+                var wVertex = Vector3.Lerp(leftWc, rightWc, gradientX);
+                var wVertexNormal = Vector3.Lerp(leftNormal, rightNormal, gradientX);
 
                 // changing the color value using the cosine of the angle
                 // between the light vector and the normal vector
                 var diffuseIntensity = ComputeLightIntensity(wVertex, wVertexNormal, _pointLightPos);
 
                 var specularIntensity = ComputeSpecularIntensity(wVertex, wVertexNormal, 
-                    _pointLightPos, _camera.Position, (byte)_materialData.SpecularExponent);
+                    _pointLightPos, _camera.Position, (int)_materialData.SpecularExponent);
 
-                // Replace by value from map_Ks.
-                var specularCoef = new RgbaColor { R = 0.5f, G = 0.5f, B = 0.5f, A = 1.0f };
-                specularCoef *= specularIntensity;
+                //var ksRgba = new RgbaColor { R = 0.5f, G = 0.5f, B = 0.5f, A = 1.0f };
+                var ksRgba = new RgbaColor { R = ks.R / 255.0f, G = ks.G / 255.0f, B = ks.B / 255.0f, A = 1.0f };
+                ksRgba *= specularIntensity;
+
+                var kdRgba = new RgbaColor { R = kd.R / 255.0f, G = kd.G / 255.0f, B = kd.B / 255.0f, A = 1.0f };
 
                 var pixelData = new PixelColorData
-                {
-                    /*                    
-                    AmbientCoef = 0.6f,
-                    DiffuseCoef = 0.5f,
-                    DiffuseIntensity = diffuseIntensity,
-                    DiffuseColor = Color.DarkOliveGreen,
-                    SpecularCoef = specularCoef,
-                    SpecularColor = Color.White
-                    */
+                {/*
                     AmbientColor = _materialData.AmbientReflectivity,                  
-                    AmbientCoef = new RgbaColor { R = 0.6f, G = 0.6f, B = 0.6f, A = 1.0f }, 
-                    DiffuseCoef = new RgbaColor { R = 0.5f, G = 0.5f, B = 0.5f, A = 1.0f }, 
+                    AmbientCoef = kdRgba, 
+                    DiffuseCoef = kdRgba, 
                     DiffuseIntensity = diffuseIntensity,
                     DiffuseColor = _materialData.DiffuseReflectivity,
-                    SpecularCoef = specularCoef,
+                    SpecularCoef = ksRgba,
+                    SpecularColor = _materialData.SpecularReflectivity*/
+                    AmbientColor = _materialData.AmbientReflectivity,
+                    AmbientCoef = kdRgba,
+                    DiffuseCoef = kdRgba,
+                    DiffuseIntensity = diffuseIntensity,
+                    DiffuseColor = _materialData.DiffuseReflectivity,
+                    SpecularCoef = ksRgba,
                     SpecularColor = _materialData.SpecularReflectivity
                 };
 
@@ -258,7 +263,7 @@ namespace GraphicsModeler.Scene
         }
 
         private float ComputeSpecularIntensity(Vector3 fragPosition, Vector3 fragNormal, Vector3 lightPosition, 
-            Vector3 viewPosition, byte power)
+            Vector3 viewPosition, int power)
         {
             var viewDirection = Vector3.Normalize(viewPosition - fragPosition);
             var lightDirection = Vector3.Normalize(lightPosition - fragPosition);
