@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Numerics;
+using System.Windows.Forms.VisualStyles;
 
 namespace GraphicsModeler.Scene
 {
@@ -8,6 +9,7 @@ namespace GraphicsModeler.Scene
         //public List<List<int>> Polygons { get; set; }
         public List<Polygon> Polygons { get; set; }
         public List<Vector3> Vertices { get; set; }
+        public List<float> W { get; set; } = new List<float>();
 
         public Mesh() { }
     }
@@ -18,5 +20,6 @@ namespace GraphicsModeler.Scene
         public Vector3 Coordinates;
         public Vector3 WorldCoordinates;
         public Vector2 UV;
+        public float W;
     }
 }

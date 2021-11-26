@@ -26,6 +26,7 @@ namespace GraphicsModeler.Scene
             {
                 for (int j = 0; j < bmp.Width; j++)
                 {
+                    //ColorBuffer[i * bmp.Width + j] = bmp.GetPixel(j, i);
                     ColorBuffer[i * bmp.Width + j] = bmp.GetPixel(j, i);
                 }
             }

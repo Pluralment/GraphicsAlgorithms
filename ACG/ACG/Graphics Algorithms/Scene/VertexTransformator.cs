@@ -55,14 +55,15 @@ namespace GraphicsModeler.Scene
             }
             var normals = model.Normals;
             var worldNormals = TransformNormals(normals, model.Rotation);
-            
-            
+
             var transformedMatrix = GetTransformMatrix(model, camera);
             var viewportMatrix = GetViewportMatrix(camera.Width, camera.Height);
             var worldMatrix = GetWorldMatrix(model.Scale, model.Rotation, model.Position);
             
             var transformedPoints = new Vector3[points.Count];
             var worldPoints = new Vector3[points.Count];
+            var wCoords = new float[points.Count];
+
             Parallel.For(0, points.Count, i =>
             {
                 var point = points[i];
@@ -75,6 +76,7 @@ namespace GraphicsModeler.Scene
                 // Implement Sutherland-Hodgman clipping //
                 
                 // Perspective divide to get NDC.
+                wCoords[i] = transformedPoint.W;
                 if (transformedPoint.W != 0.0f)
                 {
                     transformedPoint /= transformedPoint.W;  
@@ -89,7 +91,8 @@ namespace GraphicsModeler.Scene
             var transformedMesh = new Mesh()
             {
                 Vertices = transformedPoints.ToList(),
-                Polygons = model.Mesh.Polygons
+                Polygons = model.Mesh.Polygons,
+                W = wCoords.ToList()
             };
             
             return new Model(transformedMesh)

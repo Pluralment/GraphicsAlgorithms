@@ -113,7 +113,14 @@ namespace GraphicsModeler.Extensions
                     materials.Add(material);
                 }
             }
-            if (materials.Count == 0) materials.Add(new MaterialData());
+
+            if (materials.Count == 0)
+            {
+                var material = new MaterialData();
+                material.DiffuseMap = new Texture();
+                material.DiffuseMap.Load(folderName + "\\" + "ShadowMermaid_DIFF.png");
+                materials.Add(material);
+            }
 
             return new Model(new Mesh { Vertices = parser.Vectors,Polygons = parser.Polygons })
             {

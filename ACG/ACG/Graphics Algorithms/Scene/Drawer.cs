@@ -100,9 +100,13 @@ namespace GraphicsModeler.Scene
                 var uv2 = _model.Textures[p.TexturesIndexes[1]];
                 var uv3 = _model.Textures[p.TexturesIndexes[2]];
 
-                var vertex1 = new Vertex { Coordinates = p1, Normal = n1, WorldCoordinates = wp1, UV = new Vector2(uv1.X, uv1.Y) };
-                var vertex2 = new Vertex { Coordinates = p2, Normal = n2, WorldCoordinates = wp2, UV = new Vector2(uv2.X, uv2.Y) };
-                var vertex3 = new Vertex { Coordinates = p3, Normal = n3, WorldCoordinates = wp3, UV = new Vector2(uv3.X, uv3.Y) };
+                var w1 = _model.Mesh.W[p.VerticesIndexes[0]];
+                var w2 = _model.Mesh.W[p.VerticesIndexes[1]];
+                var w3 = _model.Mesh.W[p.VerticesIndexes[2]];
+
+                var vertex1 = new Vertex { Coordinates = p1, Normal = n1, WorldCoordinates = wp1, UV = new Vector2(uv1.X, uv1.Y), W = w1 };
+                var vertex2 = new Vertex { Coordinates = p2, Normal = n2, WorldCoordinates = wp2, UV = new Vector2(uv2.X, uv2.Y), W = w2 };
+                var vertex3 = new Vertex { Coordinates = p3, Normal = n3, WorldCoordinates = wp3, UV = new Vector2(uv3.X, uv3.Y), W = w3 };
                 
                 DrawTriangle(p, vertex1, vertex2, vertex3, Color.DarkOliveGreen);   
             }
@@ -209,8 +213,12 @@ namespace GraphicsModeler.Scene
             var rightZ = Interpolate(pc.Z, pd.Z, rightGradientY);
 
             // Interpolating texture coords.
-            var leftUv = InterpolateTexture(va.UV, vb.UV, pa.Z, pb.Z, leftGradientY);
-            var rightUv = InterpolateTexture(vc.UV, vd.UV, pc.Z, pd.Z, rightGradientY);
+            //var leftUv = InterpolateTexture(va.UV, vb.UV, pa.Z, pb.Z, leftGradientY);
+            var leftW = Interpolate(va.W, vb.W, leftGradientY);
+            var leftUv = InterpolateTexture(va.UV, vb.UV, va.W, vb.W, leftGradientY);
+            //var rightUv = InterpolateTexture(vc.UV, vd.UV, pc.Z, pd.Z, rightGradientY);
+            var rightW = Interpolate(vc.W, vd.W, rightGradientY);
+            var rightUv = InterpolateTexture(vc.UV, vd.UV, vc.W, vd.W, rightGradientY);
             //
 
             for (var x = leftX; x < rightX; x++)
@@ -219,8 +227,9 @@ namespace GraphicsModeler.Scene
                 
                 var z = Interpolate(leftZ, rightZ, gradientX);
 
-                var uv = InterpolateTexture(leftUv, rightUv, leftZ, rightZ, gradientX);
-                Color kd = (_materialData.DiffuseMap != null) ? _materialData.DiffuseMap.Map(uv.X, uv.Y) : Color.FromArgb(255, 153, 153, 153);
+                var uv = InterpolateTexture(leftUv, rightUv, leftW, rightW, gradientX);
+                //Color kd = (_materialData.DiffuseMap != null) ? _materialData.DiffuseMap.Map(uv.X, uv.Y) : Color.FromArgb(255, 153, 153, 153);
+                Color kd = _materialData.DiffuseMap.Map(uv.X, uv.Y);
                 Color ks = (_materialData.SpecularMap != null) ? _materialData.SpecularMap.Map(uv.X, uv.Y) : Color.FromArgb(255, 127, 127, 127);
 
                 var wVertex = Vector3.Lerp(leftWc, rightWc, gradientX);

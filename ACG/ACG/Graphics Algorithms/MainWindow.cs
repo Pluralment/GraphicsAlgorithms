@@ -37,7 +37,8 @@ namespace GraphicsModeler.MainWindow
         {
             //model = parser.CreateModel("winchester", "rifle.obj");
             //model = parser.CreateModel("mermaid", "mermaid.obj");
-            model = parser.CreateModel("model", "Model.obj");
+            //model = parser.CreateModel("model", "Model.obj");
+            model = parser.CreateModel("simple_cube", "Cube.obj");
             model.Scale = 1f;
             model.Rotation = Vector3.Zero;
 
