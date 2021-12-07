@@ -213,10 +213,8 @@ namespace GraphicsModeler.Scene
             var rightZ = Interpolate(pc.Z, pd.Z, rightGradientY);
 
             // Interpolating texture coords.
-            //var leftUv = InterpolateTexture(va.UV, vb.UV, pa.Z, pb.Z, leftGradientY);
             var leftW = Interpolate(va.W, vb.W, leftGradientY);
             var leftUv = InterpolateTexture(va.UV, vb.UV, va.W, vb.W, leftGradientY);
-            //var rightUv = InterpolateTexture(vc.UV, vd.UV, pc.Z, pd.Z, rightGradientY);
             var rightW = Interpolate(vc.W, vd.W, rightGradientY);
             var rightUv = InterpolateTexture(vc.UV, vd.UV, vc.W, vd.W, rightGradientY);
             //
@@ -228,8 +226,7 @@ namespace GraphicsModeler.Scene
                 var z = Interpolate(leftZ, rightZ, gradientX);
 
                 var uv = InterpolateTexture(leftUv, rightUv, leftW, rightW, gradientX);
-                //Color kd = (_materialData.DiffuseMap != null) ? _materialData.DiffuseMap.Map(uv.X, uv.Y) : Color.FromArgb(255, 153, 153, 153);
-                Color kd = _materialData.DiffuseMap.Map(uv.X, uv.Y);
+                Color kd = (_materialData.DiffuseMap != null) ? _materialData.DiffuseMap.Map(uv.X, uv.Y) : Color.FromArgb(255, 153, 153, 153);
                 Color ks = (_materialData.SpecularMap != null) ? _materialData.SpecularMap.Map(uv.X, uv.Y) : Color.FromArgb(255, 127, 127, 127);
 
                 var wVertex = Vector3.Lerp(leftWc, rightWc, gradientX);
@@ -242,7 +239,6 @@ namespace GraphicsModeler.Scene
                 var specularIntensity = ComputeSpecularIntensity(wVertex, wVertexNormal, 
                     _pointLightPos, _camera.Position, (int)_materialData.SpecularExponent);
 
-                //var ksRgba = new RgbaColor { R = 0.5f, G = 0.5f, B = 0.5f, A = 1.0f };
                 var ksRgba = new RgbaColor { R = ks.R / 255.0f, G = ks.G / 255.0f, B = ks.B / 255.0f, A = 1.0f };
                 ksRgba *= specularIntensity;
 

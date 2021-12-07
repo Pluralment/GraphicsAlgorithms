@@ -117,8 +117,6 @@ namespace GraphicsModeler.Extensions
             if (materials.Count == 0)
             {
                 var material = new MaterialData();
-                material.DiffuseMap = new Texture();
-                material.DiffuseMap.Load(folderName + "\\" + "ShadowMermaid_DIFF.png");
                 materials.Add(material);
             }
 
